@@ -3,11 +3,25 @@
   "WorkspaceRootPath": "P:\\COMP3011\\computer_graphics\\Lab2\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|P:\\COMP3011\\computer_graphics\\include\\shader.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\triangle.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|solutionrelative:Lab2\\triangle.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\triangle.frag||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|solutionrelative:Lab2\\triangle.frag||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\Lab2.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|solutionrelative:Lab2\\Lab2.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|P:\\COMP3011\\computer_graphics\\include\\shader.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|P:\\COMP3011\\computer_graphics\\include\\error.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1A13F68-6148-48C8-91B9-577CAA1B06A5}|Lab2\\Lab2.vcxproj|P:\\COMP3011\\computer_graphics\\include\\file.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -17,33 +31,82 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "shader.h",
-              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\include\\shader.h",
-              "RelativeDocumentMoniker": "..\\include\\shader.h",
-              "ToolTip": "P:\\COMP3011\\computer_graphics\\include\\shader.h",
-              "RelativeToolTip": "..\\include\\shader.h",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "error.h",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\include\\error.h",
+              "RelativeDocumentMoniker": "..\\include\\error.h",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\include\\error.h",
+              "RelativeToolTip": "..\\include\\error.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-02-06T09:51:25.695Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-02-06T10:51:54.036Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "triangle.frag",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\triangle.frag",
+              "RelativeDocumentMoniker": "Lab2\\triangle.frag",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\triangle.frag",
+              "RelativeToolTip": "Lab2\\triangle.frag",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-02-06T10:31:13.434Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "triangle.vert",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\triangle.vert",
+              "RelativeDocumentMoniker": "Lab2\\triangle.vert",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\triangle.vert",
+              "RelativeToolTip": "Lab2\\triangle.vert",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-02-06T10:29:01.28Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "Lab2.cpp",
               "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\Lab2.cpp",
               "RelativeDocumentMoniker": "Lab2\\Lab2.cpp",
               "ToolTip": "P:\\COMP3011\\computer_graphics\\Lab2\\Lab2\\Lab2.cpp",
               "RelativeToolTip": "Lab2\\Lab2.cpp",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAfAAAAAAAAAA==",
+              "ViewState": "AgIAAD0AAAAAAAAAAAAgwFIAAABAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-02-06T09:36:38.908Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "shader.h",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\include\\shader.h",
+              "RelativeDocumentMoniker": "..\\include\\shader.h",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\include\\shader.h",
+              "RelativeToolTip": "..\\include\\shader.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADYAAABEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-06T09:51:25.695Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "file.h",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\include\\file.h",
+              "RelativeDocumentMoniker": "..\\include\\file.h",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\include\\file.h",
+              "RelativeToolTip": "..\\include\\file.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-06T10:19:41.876Z"
             }
           ]
         }
