@@ -1,0 +1,88 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "P:\\COMP3011\\computer_graphics\\Lab3\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A14EA082-FE3D-4B9E-AC98-B737FEDECD3C}|Lab3\\Lab3.vcxproj|P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\triangle.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A14EA082-FE3D-4B9E-AC98-B737FEDECD3C}|Lab3\\Lab3.vcxproj|solutionrelative:Lab3\\triangle.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A14EA082-FE3D-4B9E-AC98-B737FEDECD3C}|Lab3\\Lab3.vcxproj|P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\triangle.frag||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A14EA082-FE3D-4B9E-AC98-B737FEDECD3C}|Lab3\\Lab3.vcxproj|solutionrelative:Lab3\\triangle.frag||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A14EA082-FE3D-4B9E-AC98-B737FEDECD3C}|Lab3\\Lab3.vcxproj|P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\shader.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A14EA082-FE3D-4B9E-AC98-B737FEDECD3C}|Lab3\\Lab3.vcxproj|solutionrelative:Lab3\\shader.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A14EA082-FE3D-4B9E-AC98-B737FEDECD3C}|Lab3\\Lab3.vcxproj|P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\Lab3.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A14EA082-FE3D-4B9E-AC98-B737FEDECD3C}|Lab3\\Lab3.vcxproj|solutionrelative:Lab3\\Lab3.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "triangle.frag",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\triangle.frag",
+              "RelativeDocumentMoniker": "Lab3\\triangle.frag",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\triangle.frag",
+              "RelativeToolTip": "Lab3\\triangle.frag",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-02-13T09:29:24.922Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "triangle.vert",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\triangle.vert",
+              "RelativeDocumentMoniker": "Lab3\\triangle.vert",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\triangle.vert",
+              "RelativeToolTip": "Lab3\\triangle.vert",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-02-13T09:29:05.772Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "shader.h",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\shader.h",
+              "RelativeDocumentMoniker": "Lab3\\shader.h",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\shader.h",
+              "RelativeToolTip": "Lab3\\shader.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-02-13T09:28:16.964Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Lab3.cpp",
+              "DocumentMoniker": "P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\Lab3.cpp",
+              "RelativeDocumentMoniker": "Lab3\\Lab3.cpp",
+              "ToolTip": "P:\\COMP3011\\computer_graphics\\Lab3\\Lab3\\Lab3.cpp",
+              "RelativeToolTip": "Lab3\\Lab3.cpp",
+              "ViewState": "AgIAAAQAAAAAAAAAAAAswC4AAABCAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-02-13T09:20:33.875Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
