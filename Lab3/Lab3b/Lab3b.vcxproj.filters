@@ -15,30 +15,23 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Lab2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\include\GL\gl3w.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Lab3b.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\shader.h">
+    <ClInclude Include="..\Lab3\error.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\file.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\error.h">
+    <ClInclude Include="..\Lab3\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="triangle.vert">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="triangle.frag">
-      <Filter>Source Files</Filter>
-    </None>
+    <None Include="..\Lab3\triangle.frag" />
+    <None Include="..\Lab3\triangle.vert" />
   </ItemGroup>
 </Project>

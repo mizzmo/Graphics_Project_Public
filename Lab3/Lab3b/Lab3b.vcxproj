@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{a14ea082-fe3d-4b9e-ac98-b737fedecd3c}</ProjectGuid>
-    <RootNamespace>Lab3</RootNamespace>
+    <ProjectGuid>{cabfce47-4dae-4d0c-909a-c6052ead35ce}</ProjectGuid>
+    <RootNamespace>Lab3b</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -133,15 +133,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\GL\gl3w.c" />
-    <ClCompile Include="Lab3.cpp" />
+    <ClCompile Include="Lab3b.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="error.h" />
-    <ClInclude Include="shader.h" />
+    <ClInclude Include="..\Lab3\error.h" />
+    <ClInclude Include="..\Lab3\shader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="triangle.frag" />
-    <None Include="triangle.vert" />
+    <None Include="..\Lab3\triangle.frag" />
+    <None Include="..\Lab3\triangle.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
