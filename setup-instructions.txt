@@ -1,0 +1,12 @@
+VC++:
+Include Directories: ../../include;
+Library Directories: ../../lib/glfw-3.4.bin.WIN64/lib-vc2022;
+
+Linker/Input:
+Additional Dependencies: glfw3.lib;
+
+Add gl3w.c to source files.
+
+Add error.h, shader.h, file.h to header files.
+
+Add traiangle.vert and triangle.frag to source files.
