@@ -7,6 +7,7 @@
 
 GLuint CompileShader(const char* vsFilename, const char* fsFilename)
 {
+	// Create a program from the given shader filenames.
 	int success;
 	char infoLog[512];
 

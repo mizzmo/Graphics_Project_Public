@@ -135,6 +135,24 @@
     <ClCompile Include="..\..\include\GL\gl3w.c" />
     <ClCompile Include="Assessment2.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\bitmap.h" />
+    <ClInclude Include="..\..\include\camera.h" />
+    <ClInclude Include="..\..\include\casteljau.h" />
+    <ClInclude Include="..\..\include\error.h" />
+    <ClInclude Include="..\..\include\file.h" />
+    <ClInclude Include="..\..\include\point.h" />
+    <ClInclude Include="..\..\include\shader.h" />
+    <ClInclude Include="..\..\include\shadow.h" />
+    <ClInclude Include="..\..\include\stb_image.h" />
+    <ClInclude Include="..\..\include\texture.h" />
+    <ClInclude Include="..\..\include\tiny_obj_loader.h" />
+    <ClInclude Include="object_loader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fragment_shader.frag" />
+    <None Include="vertex_shader.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
