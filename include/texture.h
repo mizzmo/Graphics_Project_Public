@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 
@@ -14,8 +15,14 @@ GLuint setup_texture(const char* filename)
 	glGenTextures(1, &texObject);
 	glBindTexture(GL_TEXTURE_2D, texObject);
 
+	// Handle how we want the image to fit the screen.
+	// GL_Repeat repeats the image
+	// S T and R correspond to the x, y and z axis respectively.
+	// Can mix and match depending on what you want to happen on each axis.
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Linear for blurrier smoother image
+	// Nearest for pixelated image
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -26,11 +33,28 @@ GLuint setup_texture(const char* filename)
 
 	// Check pxls colour data ia loaded correctly
 	if (pxls) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pxls);
+		// Decide which image format to use.
+		GLenum format;
+		if (chan == 1) format = GL_RED;
+		else if (chan == 3) format = GL_RGB;
+		else if (chan == 4) format = GL_RGBA;
+		else {
+			std::cerr << "Unsupported number of channels in texture: " << filename << std::endl;
+			stbi_image_free(pxls);
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_BLEND);
+			return 0; 
+		}
 
+		glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, pxls);
+		// Free the image data after uploading
+		stbi_image_free(pxls); 
+	}
+	else {
+		std::cerr << "Failed to load texture: " << filename << std::endl;
 	}
 
-	delete[] pxls;
+	
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 
@@ -66,9 +90,6 @@ GLuint setup_mipmaps(const char* filename[], int n)
 	}
 	
 	// Check pxls colour data ia loaded correctly
-	
-
-	
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 

@@ -1,15 +1,13 @@
-#include<iostream>
+#include <iostream>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
 #include "error.h"
 #include "shader.h"
-
+#include "texture.h"
 
 #define NUM_VBO 1
-
 #define NUM_VAO 1
-
 
 // Create a Vertex Array Object (VAO)
 // Stores pointers to VBOs and tells OpenGL how to interpret the data.
@@ -21,10 +19,17 @@ GLuint VBOs[NUM_VBO];
 
 // Create an array of floats representing coordinates of a triangle.
 GLfloat vertices[] = {
-	// Left Corner, Right Corner, Top Left Corner
-	-0.5f, -0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	0.0f, 0.5f, 0.0f,
+	// Top Left, Top Right, Bottom Right.
+	// R, G, B, Texture Coordinates.
+	// Top Right Triangle.
+	-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+	0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+	0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+	// Bottom Left Triangle
+	// Top Left, Bottom Right, Bottom Left
+	-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+	0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+	-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
 };
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -40,6 +45,38 @@ void ResizeCallback(GLFWwindow*, int w, int h)
 	// Area we want to render in in the window.
 	// Coordinates and window size.
 	glViewport(0, 0, w, h);
+}
+
+void initialise_buffers() {
+	// Generate number of VAOs
+	glGenVertexArrays(NUM_VAO, VAOs);
+	// Bind VAO
+	glBindVertexArray(VAOs[0]);
+	// Generate number of VBOs
+	glCreateBuffers(NUM_VBO, VBOs);
+	// Binding makes a certain object the current object.
+	// Modifying an object modifies the current bound object. 
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+	// Store vertices in VBO
+	// Format :: (Type of buffer, size of buffer, pointer to data, usage hint)
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// Configure VAO so gl knows how to read it(
+	// Pos of attribute, how many values per vertex, kind of values, coordinates as ints?, stride (data between each vertex), offset (pointer to where vertices start in array)
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	// Enable the vertex attribute array
+	glEnableVertexAttribArray(0);
+	// Colour attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// Texture attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	// Unbind both by binding to 0
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 int main() {
@@ -72,28 +109,15 @@ int main() {
 	// Create a vertext shader and Fragment Shader using the Shader class.
 	GLuint program = CompileShader("vertex_shader.vert", "fragment_shader.frag");
 	
-	// Generate number of VAOs
-	glGenVertexArrays(NUM_VAO, VAOs);
-	// Bind VAO
-	glBindVertexArray(VAOs[0]);
-	// Generate number of VBOs
-	glCreateBuffers(NUM_VBO, VBOs);
-	// Binding makes a certain object the current object.
-	// Modifying an object modifies the current bound object. 
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-	// Store vertices in VBO
-	// Format :: (Type of buffer, size of buffer, pointer to data, usage hint)
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// Create VAO and VBOs
+	initialise_buffers();
 
-	// Configure VAO so gl knows how to read it(
-	// Pos of attribute, how many values per vertex, kind of values, coordinates as ints?, stride (data between each vertex), offset (pointer to where vertices start in array)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	// Enable the vertex attribute array
-	glEnableVertexAttribArray(0);
-	
-	// Unbind both by binding to 0
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	// Create a uniform that will be used to set the texture.
+	GLuint texUniform = glGetUniformLocation(program, "tex0");
+	glUniform1i(texUniform, 0);
+
+	// Texture to load.
+	GLuint texture = setup_texture("jubilee.bmp");
 
 
 	while (!glfwWindowShouldClose(window)) {
@@ -101,6 +125,8 @@ int main() {
 		glClearColor(0.07f, 0.31f, 0.17f, 1.0f);
 		// Execute colour buffer command.
 		glClear(GL_COLOR_BUFFER_BIT);
+		// Use the given texture
+		glBindTexture(GL_TEXTURE_2D, texture);
 		// Actiate shader program
 		glUseProgram(program);
 		// Bind the VAO to tell gl we want to use this one

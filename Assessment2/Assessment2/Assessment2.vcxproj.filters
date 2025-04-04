@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Textures">
+      <UniqueIdentifier>{1c789ba7-f081-4377-a62d-25105e44ceaa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assessment2.cpp">
@@ -63,5 +66,19 @@
   <ItemGroup>
     <None Include="vertex_shader.vert" />
     <None Include="fragment_shader.frag" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="grid.bmp">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="jubilee.bmp">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="car.jpg">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Grass_Block.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>
