@@ -154,10 +154,14 @@
     <None Include="vertex_shader.vert" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="bricks.jpg" />
     <Image Include="car.jpg" />
     <Image Include="Grass_Block.png" />
     <Image Include="grid.bmp" />
     <Image Include="jubilee.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="shape_vectors.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

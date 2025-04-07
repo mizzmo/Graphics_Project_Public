@@ -80,5 +80,13 @@
     <Image Include="Grass_Block.png">
       <Filter>Resource Files\Textures</Filter>
     </Image>
+    <Image Include="bricks.jpg">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="shape_vectors.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>
