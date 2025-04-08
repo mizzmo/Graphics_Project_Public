@@ -9,9 +9,10 @@
 #include "shader.h"
 #include "texture.h"
 #include "camera.h"
+#include "plane.h"
 
-#define NUM_VBO 1
-#define NUM_VAO 1
+#define NUM_VBO 2
+#define NUM_VAO 2
 
 SCamera Camera;
 
@@ -84,6 +85,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	float x_offset = 0.f;
 	float y_offset = 0.f;
 	bool cam_changed = false;
+	// Camera sensitivity.
 	float sentitivity = 1.f;
 
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
@@ -132,22 +134,18 @@ void ResizeCallback(GLFWwindow*, int w, int h)
 void initialise_buffers() {
 	// Generate number of VAOs
 	glGenVertexArrays(NUM_VAO, VAOs);
-	// Bind VAO
+	// Bind VAO 0 (for the triangle)
 	glBindVertexArray(VAOs[0]);
 	// Generate number of VBOs
 	glCreateBuffers(NUM_VBO, VBOs);
-	// Binding makes a certain object the current object.
-	// Modifying an object modifies the current bound object. 
+	// Bind VBO 0 (for the triangle vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
 	// Store vertices in VBO
-	// Format :: (Type of buffer, size of buffer, pointer to data, usage hint)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// Configure VAO so gl knows how to read it(
-	// Pos of attribute, how many values per vertex, kind of values, coordinates as ints?, stride (data between each vertex), offset (pointer to where vertices start in array)
+	// Configure VAO 0 (triangle)
 	// Position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	// Enable the vertex attribute array
 	glEnableVertexAttribArray(0);
 	// Colour attribute
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -156,18 +154,31 @@ void initialise_buffers() {
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-	// Unbind both by binding to 0
+	// Bind VAO 1 (for the plane)
+	glBindVertexArray(VAOs[1]);
+	// Bind VBO 1 (for the plane vertices)
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
+	// Generate the vertices for the plane.
+	std::vector<GLfloat> planeVertices = generate_plane(10, 1.0f);
+	glBufferData(GL_ARRAY_BUFFER, planeVertices.size() * sizeof(float), planeVertices.data(), GL_STATIC_DRAW);
+	// Position Attribute for the plane
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0); 
+
+	// Colour Attribute for the plane
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
 int main() {
-
-
 	unsigned int width = 800;
 	unsigned int height = 600;
 	// Calculate number of vertices in the array
-	int num_vertices = sizeof(vertices) / sizeof(vertices[0]) / 8;
+	int num_vertices = sizeof(vertices) / (8 * sizeof(float));
 	// Initialize GLFW
 	glfwInit();
 
@@ -199,58 +210,72 @@ int main() {
 	
 	// Initialise the camera
 	InitCamera(Camera);
+	cam_dist = 0.5f;
+	MoveAndOrientCamera(Camera, glm::vec3(0.f, 0.f, 0.f), cam_dist, 0.f, 0.f);
 
 	// Create VAO and VBOs
 	initialise_buffers();
 
-	// Create a uniform that will be used to set the texture.
-	GLuint texUniform = glGetUniformLocation(program, "tex0");
-	glUniform1i(texUniform, 0);
-
 	// Texture to load.
-	GLuint texture = setup_texture("bricks.jpg");
+	GLuint brick_tex = setup_texture("bricks.jpg");
+	GLuint grass_tex = setup_texture("grass.jpg");
 
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);
 
+	std::vector<GLfloat> planeVertices = generate_plane(10, 10.0f);
+
+
 	while (!glfwWindowShouldClose(window)) {
-		// Clear the colour buffer and give another colour.
+		// Clear the colour buffer
 		glClearColor(0.07f, 0.31f, 0.17f, 1.0f);
-		// Clear colour and depth buffer each iteration.
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		// Use the given texture
-		glBindTexture(GL_TEXTURE_2D, texture);
-		// Actiate shader program
+
+		// Use the shader program
 		glUseProgram(program);
-		// Bind the VAO to tell gl we want to use this one
+
+		// --- Draw the Triangle ---
+		// Bind texture
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, brick_tex);
+		glUniform1i(glGetUniformLocation(program, "tex0"), 0);
+
 		glBindVertexArray(VAOs[0]);
 
-		// Initialise space matrices.
-		glm::mat4 model = glm::mat4(1.0f);
-		glm::mat4 view = glm::mat4(1.0f);
-		glm::mat4 projection = glm::mat4(1.0f);
+		glm::mat4 modelTriangle = glm::mat4(1.0f);
+		modelTriangle = glm::scale(modelTriangle, glm::vec3(0.1f, 0.1f, 0.1f));
+		modelTriangle = glm::rotate(modelTriangle, (float)glfwGetTime() / 20, glm::vec3(0.f, 1.f, 0.f));
+		glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
 
-		// Rotate the model view.
-		// Model to rotate, amount to rotate, axis to rotate around.
-		model = glm::rotate(model, (float)glfwGetTime() / 20, glm::vec3(0.f, 1.f, 0.f));
-		// Move the world view back and up.
+		glm::mat4 view = glm::lookAt(Camera.Position, Camera.Position + Camera.Front, Camera.Up);
+		glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-		view = glm::lookAt(Camera.Position, Camera.Position + Camera.Front, Camera.Up);
-		// Define a perspective that clips view at 0.1 near and 100 far.
-		projection = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
+		glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-		// Set the values in the vertex shader.
-		glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		int num_vertices = sizeof(vertices) / (8 * sizeof(float));
+		glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+
+		// --- Draw the Plane ---
+		// Bind texture to plane
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, grass_tex);
+		glUniform1i(glGetUniformLocation(program, "tex1"), 1);
+
+		glBindVertexArray(VAOs[1]);
+
+		glm::mat4 modelPlane = glm::mat4(1.0f);
+		modelPlane = glm::translate(modelPlane, glm::vec3(-0.5f, -0.1f, 0.5f));
+		glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelPlane));
+		// Use the same view and projection matrices as the triangle 
 		glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-		// Draw the triangle
-		// Type of primitive, starting value, amount of vertices.
-		glDrawArrays(GL_TRIANGLES, 0, num_vertices);
-		// Swap buffers to update image each frame.
-		glfwSwapBuffers(window);
+		int num_plane_vertices = planeVertices.size() / 5;
+		glDrawArrays(GL_TRIANGLES, 0, num_plane_vertices);
 
-		// Process polled events (resize etc).
+		glBindVertexArray(0);
+		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 

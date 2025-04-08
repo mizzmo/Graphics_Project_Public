@@ -1,0 +1,33 @@
+newmtl SL_BASE_BLACK
+Kd 0.113725 0.113725 0.113725
+Ke 0 0 0
+Ka 1 1 1
+Ks 0 0 0
+Ns 400
+Tr 0
+d 1
+Ni 1.5
+Tf 1 1 1
+
+newmtl SL_BASE_Flaps
+Kd 0.333333 0.333333 0.333333
+Ke 0 0 0
+Ka 1 1 1
+Ks 0 0 0
+Ns 400
+Tr 0
+d 1
+Ni 1.5
+Tf 1 1 1
+
+newmtl SL_BASE_GREY
+Kd 0.501961 0.501961 0.501961
+Ke 0 0 0
+Ka 1 1 1
+Ks 0 0 0
+Ns 400
+Tr 0
+d 1
+Ni 1.5
+Tf 1 1 1
+

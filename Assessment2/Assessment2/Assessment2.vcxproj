@@ -148,6 +148,7 @@
     <ClInclude Include="..\..\include\texture.h" />
     <ClInclude Include="..\..\include\tiny_obj_loader.h" />
     <ClInclude Include="object_loader.h" />
+    <ClInclude Include="plane.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment_shader.frag" />
@@ -156,6 +157,7 @@
   <ItemGroup>
     <Image Include="bricks.jpg" />
     <Image Include="car.jpg" />
+    <Image Include="grass.jpg" />
     <Image Include="Grass_Block.png" />
     <Image Include="grid.bmp" />
     <Image Include="jubilee.bmp" />

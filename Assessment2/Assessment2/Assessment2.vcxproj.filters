@@ -62,10 +62,17 @@
     <ClInclude Include="object_loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="plane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vertex_shader.vert" />
-    <None Include="fragment_shader.frag" />
+    <None Include="fragment_shader.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="vertex_shader.vert">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="grid.bmp">
@@ -81,6 +88,9 @@
       <Filter>Resource Files\Textures</Filter>
     </Image>
     <Image Include="bricks.jpg">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="grass.jpg">
       <Filter>Resource Files\Textures</Filter>
     </Image>
   </ItemGroup>
