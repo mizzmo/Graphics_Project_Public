@@ -73,7 +73,10 @@
     <None Include="vertex_shader.vert">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="col_fragment_shader.frag">
+    <None Include="ship_frag.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="grass_frag.frag">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
@@ -94,6 +97,9 @@
       <Filter>Resource Files\Textures</Filter>
     </Image>
     <Image Include="grass.jpg">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="objs\simple_ufo\source\UFO\TexturesCom_MetalAircraft0050_1_S lrg.jpg">
       <Filter>Resource Files\Textures</Filter>
     </Image>
   </ItemGroup>

@@ -32,6 +32,7 @@ struct vertex
 	glm::vec4 pos;
 	glm::vec3 col;
 	glm::vec3 nor;
+	glm::vec2 tex;
 };
 
 struct triangle
@@ -94,15 +95,21 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 				// Use material diffuse color if available
 				if (mat_id >= 0 && mat_id < materials.size()) {
 					auto& mat = materials[mat_id];
-					std::cout << "Using material diffuse color: "
-						<< mat.diffuse[0] << ", "
-						<< mat.diffuse[1] << ", "
-						<< mat.diffuse[2] << std::endl;
 					vert.col = glm::vec3(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
 				}
 				else {
-					printf("No material found for face %d, using default color\n", f);
+					//printf("No material found for face %d, using default color\n", f);
 					vert.col = glm::vec3(1.0f); // default white
+				}
+
+				if (idx.texcoord_index >= 0) {
+					vert.tex = {
+						attrib.texcoords[2 * idx.texcoord_index + 0],
+						attrib.texcoords[2 * idx.texcoord_index + 1]
+					};
+				}
+				else {
+					vert.tex = glm::vec2(0.0f); // fallback
 				}
 
 				face_verts.push_back(vert);

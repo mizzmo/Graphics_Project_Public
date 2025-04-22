@@ -131,7 +131,7 @@ vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles) {
 	// Convert the triangle data to a flat array of floats.
 	// Each triangle has 3 vertices, each vertex has 8 floats (x, y, z, r, g, b, s, t)
 	// So each triangle has 3 * 8 = 24 floats.
-	std::vector<GLfloat> tri_array(triangles.size() * 18);
+	std::vector<GLfloat> tri_array(triangles.size() * 24);
 	int index = 0;
 
 	// Loop through each triangle and store its data in the array
@@ -142,7 +142,9 @@ vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles) {
 		tri_array[index++] = tri.v1.col.r;
 		tri_array[index++] = tri.v1.col.g;
 		tri_array[index++] = tri.v1.col.b;
-		// You can implement textures here if needed
+		tri_array[index++] = tri.v1.tex.x;
+		tri_array[index++] = tri.v1.tex.y;
+		
 
 		tri_array[index++] = tri.v2.pos.x;
 		tri_array[index++] = tri.v2.pos.y;
@@ -150,6 +152,8 @@ vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles) {
 		tri_array[index++] = tri.v2.col.r;
 		tri_array[index++] = tri.v2.col.g;
 		tri_array[index++] = tri.v2.col.b;
+		tri_array[index++] = tri.v2.tex.x;
+		tri_array[index++] = tri.v2.tex.y;
 
 		tri_array[index++] = tri.v3.pos.x;
 		tri_array[index++] = tri.v3.pos.y;
@@ -157,10 +161,12 @@ vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles) {
 		tri_array[index++] = tri.v3.col.r;
 		tri_array[index++] = tri.v3.col.g;
 		tri_array[index++] = tri.v3.col.b;
+		tri_array[index++] = tri.v3.tex.x;
+		tri_array[index++] = tri.v3.tex.y;
 	}
-	for (int i = 0; i < triangles.size() * 18; ++i) {
-		std::cout << tri_array[i] << " ";
-	}
+	//for (int i = 0; i < triangles.size() * 24; ++i) {
+	//	std::cout << tri_array[i] << " ";
+	//}
 	return tri_array;
 }
 
@@ -212,24 +218,27 @@ void initialise_buffers() {
 
 	// Configure VAO 2 (object 1)
 	glBindVertexArray(VAOs[2]);
-	// Bind VBO 1 (for the plane vertices)
+	// Bind VBO 2 (for the plane vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);	
 	// Load an Object
 	std::vector<triangle> triangles;
-	std::string obj_path = "objs/ufo/Low_poly_UFO.obj";
+	std::string obj_path = "objs/simple_ufo/source/UFO/UFO.obj";
 	// Specify the base folder path
-	std::string base_path = "objs/ufo/";
+	std::string base_path = "objs/simple_ufo/source/UFO";
 	int num_triangles = obj_parse(obj_path.c_str(), &triangles, base_path.c_str());
 	// Convert to array of floats
 	ship_array = tri_to_fl_array(triangles);
 	// Upload the vertex data to the VBO
 	glBufferData(GL_ARRAY_BUFFER, ship_array.size() * sizeof(GLfloat), ship_array.data(), GL_STATIC_DRAW);
 	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// Colour attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	// Texture attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 
 	// Unbind buffers and VAO
@@ -269,8 +278,9 @@ int main() {
 	}
 
 	// Create a vertext shader and Fragment Shader using the Shader class.
-	GLuint program = CompileShader("vertex_shader.vert", "fragment_shader.frag");
-	GLuint colour_program = CompileShader("vertex_shader.vert", "col_fragment_shader.frag");
+	GLuint brick_program = CompileShader("vertex_shader.vert", "fragment_shader.frag");
+	GLuint ship_program = CompileShader("vertex_shader.vert", "ship_frag.frag");
+	GLuint grass_program = CompileShader("vertex_shader.vert", "grass_frag.frag");
 	
 	// Initialise the camera
 	InitCamera(Camera);
@@ -284,6 +294,17 @@ int main() {
 	GLuint brick_tex = setup_texture("bricks.jpg");
 	GLuint grass_tex = setup_texture("grass.jpg");
 
+	// Texture for the UFO object.
+	GLuint ship_tex;
+	ship_tex = setup_texture("objs/simple_ufo/source/UFO/TexturesCom_MetalAircraft0050_1_S lrg.jpg");
+
+	glActiveTexture(GL_TEXTURE2); // Texture unit 2
+	glBindTexture(GL_TEXTURE_2D, ship_tex);
+
+	// Pass the texture units to the shader 
+	glUniform1i(glGetUniformLocation(ship_program, "ship_tex"), 2);
+
+
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);
 
@@ -293,26 +314,26 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Use the shader program
-		glUseProgram(program);
+		glUseProgram(brick_program);
 
 		// --- Draw the Triangle ---
 		// Bind texture
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, brick_tex);
-		glUniform1i(glGetUniformLocation(program, "tex0"), 0);
+		glUniform1i(glGetUniformLocation(brick_program, "tex0"), 0);
 
 		glBindVertexArray(VAOs[0]);
 
 		glm::mat4 modelTriangle = glm::mat4(1.0f);
 		modelTriangle = glm::scale(modelTriangle, glm::vec3(0.1f, 0.1f, 0.1f));
 		modelTriangle = glm::rotate(modelTriangle, (float)glfwGetTime() / 20, glm::vec3(0.f, 1.f, 0.f));
-		glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
+		glUniformMatrix4fv(glGetUniformLocation(brick_program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
 
 		glm::mat4 view = glm::lookAt(Camera.Position, Camera.Position + Camera.Front, Camera.Up);
-		glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(brick_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
-		glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(brick_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 		int num_vertices = sizeof(vertices) / (8 * sizeof(float));
 		glDrawArrays(GL_TRIANGLES, 0, num_vertices);
@@ -321,16 +342,16 @@ int main() {
 		// Bind texture to plane
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, grass_tex);
-		glUniform1i(glGetUniformLocation(program, "tex1"), 1);
+		glUniform1i(glGetUniformLocation(grass_program, "tex1"), 1);
 
 		glBindVertexArray(VAOs[1]);
 
 		glm::mat4 modelPlane = glm::mat4(1.0f);
 		modelPlane = glm::translate(modelPlane, glm::vec3(-0.5f, -0.1f, 0.5f));
-		glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelPlane));
+		glUniformMatrix4fv(glGetUniformLocation(grass_program, "model"), 1, GL_FALSE, glm::value_ptr(modelPlane));
 		// Use the same view and projection matrices as the triangle 
-		glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(grass_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(grass_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 		int num_plane_vertices = planeVertices.size() / 5;
 		glDrawArrays(GL_TRIANGLES, 0, num_plane_vertices);
@@ -338,21 +359,26 @@ int main() {
 
 		// --- Draw the Object ---
 		// Switch to basic colour shader
-		glUseProgram(colour_program);
+		glUseProgram(ship_program);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, ship_tex);
+		glUniform1i(glGetUniformLocation(ship_program, "ship_tex"), 2);
+
 		// Bind the VAO
 		glBindVertexArray(VAOs[2]);  
 
 		// Apply transformations to the object
 		glm::mat4 modelObject = glm::mat4(1.0f);
 		modelObject = glm::scale(modelObject, glm::vec3(0.1f, 0.1f, 0.1f));
-		modelObject = glm::translate(modelObject, glm::vec3(-0.5f, -0.1f, 0.5f));
-		glUniformMatrix4fv(glGetUniformLocation(colour_program, "model"), 1, GL_FALSE, glm::value_ptr(modelObject));
+		modelObject = glm::translate(modelObject, glm::vec3(0.f, 1.f, 0.5f));
+		glUniformMatrix4fv(glGetUniformLocation(ship_program, "model"), 1, GL_FALSE, glm::value_ptr(modelObject));
 
 		// Use the same view and projection matrices as before
-		glUniformMatrix4fv(glGetUniformLocation(colour_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(colour_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(ship_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(ship_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-		int num_object_vertices = ship_array.size() / 6;
+		int num_object_vertices = ship_array.size() / 8;
 		glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 
 		glBindVertexArray(0);
@@ -364,7 +390,7 @@ int main() {
 	glDeleteVertexArrays(NUM_VAO, VAOs);
 	glDeleteBuffers(NUM_VBO, VBOs);
 	// Delete the shader program
-	glDeleteProgram(program);
+	glDeleteProgram(brick_program);
 
 	// Remove the window
 	glfwDestroyWindow(window);
