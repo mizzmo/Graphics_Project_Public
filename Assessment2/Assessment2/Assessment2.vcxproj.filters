@@ -59,10 +59,10 @@
     <ClInclude Include="..\..\include\tiny_obj_loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="object_loader.h">
+    <ClInclude Include="plane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="plane.h">
+    <ClInclude Include="object_parser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,6 +71,9 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="vertex_shader.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="col_fragment_shader.frag">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

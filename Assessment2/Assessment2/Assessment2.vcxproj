@@ -147,10 +147,11 @@
     <ClInclude Include="..\..\include\stb_image.h" />
     <ClInclude Include="..\..\include\texture.h" />
     <ClInclude Include="..\..\include\tiny_obj_loader.h" />
-    <ClInclude Include="object_loader.h" />
+    <ClInclude Include="object_parser.h" />
     <ClInclude Include="plane.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="col_fragment_shader.frag" />
     <None Include="fragment_shader.frag" />
     <None Include="vertex_shader.vert" />
   </ItemGroup>

@@ -10,11 +10,15 @@
 #include "texture.h"
 #include "camera.h"
 #include "plane.h"
+#include "object_parser.h"
 
-#define NUM_VBO 2
-#define NUM_VAO 2
+#define NUM_VBO 3
+#define NUM_VAO 3
 
 SCamera Camera;
+
+std::vector<GLfloat> planeVertices;
+vector<GLfloat> ship_array;
 
 
 
@@ -123,6 +127,43 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 }
 
+vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles) {
+	// Convert the triangle data to a flat array of floats.
+	// Each triangle has 3 vertices, each vertex has 8 floats (x, y, z, r, g, b, s, t)
+	// So each triangle has 3 * 8 = 24 floats.
+	std::vector<GLfloat> tri_array(triangles.size() * 18);
+	int index = 0;
+
+	// Loop through each triangle and store its data in the array
+	for (const triangle& tri : triangles) {
+		tri_array[index++] = tri.v1.pos.x;
+		tri_array[index++] = tri.v1.pos.y;
+		tri_array[index++] = tri.v1.pos.z;
+		tri_array[index++] = tri.v1.col.r;
+		tri_array[index++] = tri.v1.col.g;
+		tri_array[index++] = tri.v1.col.b;
+		// You can implement textures here if needed
+
+		tri_array[index++] = tri.v2.pos.x;
+		tri_array[index++] = tri.v2.pos.y;
+		tri_array[index++] = tri.v2.pos.z;
+		tri_array[index++] = tri.v2.col.r;
+		tri_array[index++] = tri.v2.col.g;
+		tri_array[index++] = tri.v2.col.b;
+
+		tri_array[index++] = tri.v3.pos.x;
+		tri_array[index++] = tri.v3.pos.y;
+		tri_array[index++] = tri.v3.pos.z;
+		tri_array[index++] = tri.v3.col.r;
+		tri_array[index++] = tri.v3.col.g;
+		tri_array[index++] = tri.v3.col.b;
+	}
+	for (int i = 0; i < triangles.size() * 18; ++i) {
+		std::cout << tri_array[i] << " ";
+	}
+	return tri_array;
+}
+
 void ResizeCallback(GLFWwindow*, int w, int h)
 {
 	// Handle window resizes.
@@ -159,7 +200,7 @@ void initialise_buffers() {
 	// Bind VBO 1 (for the plane vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
 	// Generate the vertices for the plane.
-	std::vector<GLfloat> planeVertices = generate_plane(10, 1.0f);
+	planeVertices = generate_plane(10, 1.0f);
 	glBufferData(GL_ARRAY_BUFFER, planeVertices.size() * sizeof(float), planeVertices.data(), GL_STATIC_DRAW);
 	// Position Attribute for the plane
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -168,6 +209,28 @@ void initialise_buffers() {
 	// Colour Attribute for the plane
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// Configure VAO 2 (object 1)
+	glBindVertexArray(VAOs[2]);
+	// Bind VBO 1 (for the plane vertices)
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);	
+	// Load an Object
+	std::vector<triangle> triangles;
+	std::string obj_path = "objs/ufo/Low_poly_UFO.obj";
+	// Specify the base folder path
+	std::string base_path = "objs/ufo/";
+	int num_triangles = obj_parse(obj_path.c_str(), &triangles, base_path.c_str());
+	// Convert to array of floats
+	ship_array = tri_to_fl_array(triangles);
+	// Upload the vertex data to the VBO
+	glBufferData(GL_ARRAY_BUFFER, ship_array.size() * sizeof(GLfloat), ship_array.data(), GL_STATIC_DRAW);
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// Colour attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
 
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -207,6 +270,7 @@ int main() {
 
 	// Create a vertext shader and Fragment Shader using the Shader class.
 	GLuint program = CompileShader("vertex_shader.vert", "fragment_shader.frag");
+	GLuint colour_program = CompileShader("vertex_shader.vert", "col_fragment_shader.frag");
 	
 	// Initialise the camera
 	InitCamera(Camera);
@@ -222,9 +286,6 @@ int main() {
 
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);
-
-	std::vector<GLfloat> planeVertices = generate_plane(10, 10.0f);
-
 
 	while (!glfwWindowShouldClose(window)) {
 		// Clear the colour buffer
@@ -273,6 +334,26 @@ int main() {
 
 		int num_plane_vertices = planeVertices.size() / 5;
 		glDrawArrays(GL_TRIANGLES, 0, num_plane_vertices);
+
+
+		// --- Draw the Object ---
+		// Switch to basic colour shader
+		glUseProgram(colour_program);
+		// Bind the VAO
+		glBindVertexArray(VAOs[2]);  
+
+		// Apply transformations to the object
+		glm::mat4 modelObject = glm::mat4(1.0f);
+		modelObject = glm::scale(modelObject, glm::vec3(0.1f, 0.1f, 0.1f));
+		modelObject = glm::translate(modelObject, glm::vec3(-0.5f, -0.1f, 0.5f));
+		glUniformMatrix4fv(glGetUniformLocation(colour_program, "model"), 1, GL_FALSE, glm::value_ptr(modelObject));
+
+		// Use the same view and projection matrices as before
+		glUniformMatrix4fv(glGetUniformLocation(colour_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(colour_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+		int num_object_vertices = ship_array.size() / 6;
+		glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);
