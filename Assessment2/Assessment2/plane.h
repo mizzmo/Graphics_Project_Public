@@ -9,7 +9,7 @@
 
 std::vector<GLfloat> generate_plane(int div, float width) {
     std::vector<GLfloat> plane;
-    float triangleSide = width / div;
+    float triangleSide = width / div + 1;
 
     for (int row = 0; row < div; ++row) {
         for (int col = 0; col < div; ++col) {
