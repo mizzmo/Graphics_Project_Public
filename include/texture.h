@@ -24,7 +24,7 @@ GLuint setup_texture(const char* filename)
 	// Linear for blurrier smoother image
 	// Nearest for pixelated image
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	int w, h, chan;
 	// Load image at filename, x pixels wide and y pixels high

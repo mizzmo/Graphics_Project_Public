@@ -5,8 +5,8 @@ layout (location = 0) out vec4 fColour;
 in vec3 colour;
 in vec2 texCoords;
 
-uniform sampler2D tex1; // Grass texture for the plane
+uniform sampler2D tex; 
 
 void main() {
-	fColour = texture(tex1, texCoords);  // Brick texture
+	fColour = texture(tex, texCoords); 
 }

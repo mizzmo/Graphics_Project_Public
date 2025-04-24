@@ -15,27 +15,34 @@
 #define NUM_VBO 3
 #define NUM_VAO 3
 
+// Interactive Cameras
 SCamera Model_Viewer_Camera;
-SCamera Fixed_Camera_Ship;
 SCamera Fixed_Rotate_Camera;
 
-int current_camera = 0;
-const int  num_cameras = 3;
+// Static Cameras
+SCamera Fixed_Camera_Ship;
+SCamera Fixed_Left_Front;
+SCamera Fixed_Left_Rear;
+SCamera Fixed_Right_Front;
+SCamera Fixed_Right_Rear;
 
-SCamera* cameras[num_cameras] = { &Model_Viewer_Camera, &Fixed_Camera_Ship, &Fixed_Rotate_Camera };
+int current_camera = 0;
+const int  num_cameras = 7;
+
+SCamera* cameras[num_cameras] = { &Model_Viewer_Camera, &Fixed_Camera_Ship, &Fixed_Rotate_Camera, &Fixed_Left_Front, &Fixed_Left_Rear, &Fixed_Right_Front, &Fixed_Right_Rear };
 
 SCamera* activeCamera = &Model_Viewer_Camera;
 
 // Radius of the cam orbit
 float orbit_radius = 10.0f;
 // Speed of orbit
-float orbit_speed = 0.0001f; 
+float orbit_speed = 0.00005f; 
 // Center of the orbit
 glm::vec3 orbit_center(0.0f, 0.0f, 0.0f);
 
 
 
-std::vector<GLfloat> planeVertices;
+//std::vector<GLfloat> planeVertices;
 vector<GLfloat> ship_array;
 
 
@@ -95,6 +102,20 @@ GLfloat vertices[] = {
 	-1.0f, 0.0f, 1.0f,  	0.5f, 0.0f, 0.0f,		0.0f, 0.0f,				//v1
 	1.0f, 0.0f, 1.0f,       0.5f, 0.f,  0.0f,		1.0f, 0.0f,				//v2
 	0.0f, -1.0f, 0.0f,      0.5f, 0.f,  0.0f,		0.0f, 1.0f,				//v3
+};
+
+GLfloat square[] = {
+	// Top Left, Top Right, Bottom Right.
+	// R, G, B, Texture Coordinates.
+	// Top Right Triangle.
+	-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f,
+	0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 10.0f, 10.0f,
+	0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 10.0f, 0.0f,
+	// Bottom Left Triangle
+	// Top Left, Bottom Right, Bottom Left
+	-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f,
+	0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 10.0f, 0.0f,
+	-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
 };
 
 
@@ -257,15 +278,18 @@ void initialise_buffers() {
 	// Bind VBO 1 (for the plane vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
 	// Generate the vertices for the plane.
-	planeVertices = generate_plane(10, 1.0f);
-	glBufferData(GL_ARRAY_BUFFER, planeVertices.size() * sizeof(float), planeVertices.data(), GL_STATIC_DRAW);
+	//planeVertices = generate_plane(10, 1.0f);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), square, GL_STATIC_DRAW);
 	// Position Attribute for the plane
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0); 
 
 	// Colour Attribute for the plane
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	// Texture attribute for plane.
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	// Configure VAO 2 (object 1)
 	glBindVertexArray(VAOs[2]);
@@ -300,14 +324,33 @@ void initialise_buffers() {
 void initialise_cameras() {
 	InitCamera(Model_Viewer_Camera);
 	cam_dist = 9.f;
-	// Move the model_viewer camera to an initial position.
+	int fixed_dist = 9.f;
+	// Initial position far view of entire scene, slight upward angle
 	MoveAndOrientCamera(Model_Viewer_Camera, glm::vec3(0.f, 0.f, 0.f), cam_dist, 0.f, -20.f);
 
 	InitCamera(Fixed_Camera_Ship);
+	// Initial position just under the center of the UFO, pointing directly down
+	MoveAndOrientCamera(Fixed_Camera_Ship, glm::vec3(0.f, 0.f, 0.f), 1.9f, 0.f, -90.f);
+
+	InitCamera(Fixed_Left_Front);
+	// Initial position left front corner
+	MoveAndOrientCamera(Fixed_Left_Front, glm::vec3(0.f, 0.f, 0.f), fixed_dist, 45.f, -20.f);
+
+	InitCamera(Fixed_Left_Rear);
+	// Initial position left rear corner
+	MoveAndOrientCamera(Fixed_Left_Rear, glm::vec3(0.f, 0.f, 0.f), fixed_dist, 90.f, -20.f);
+
+	InitCamera(Fixed_Right_Front);
+	// Initial position right front corner
+	MoveAndOrientCamera(Fixed_Right_Front, glm::vec3(0.f, 0.f, 0.f), fixed_dist, -45.f, -20.f);
+
+	InitCamera(Fixed_Right_Rear);
+	// Initial position right rear corner
+	MoveAndOrientCamera(Fixed_Right_Rear, glm::vec3(0.f, 0.f, 0.f), fixed_dist, -90.f, -20.f);
 
 	
 	InitCamera(Fixed_Rotate_Camera);
-	// Move the oribitng camera to an intial position
+	// Initial position far view with slight x and y offset
 	MoveAndOrientCamera(Fixed_Rotate_Camera, glm::vec3(0.f, 0.f, 0.f), cam_dist, -15.f, -10.f);
 }
 
@@ -318,6 +361,9 @@ int main() {
 	int num_vertices = sizeof(vertices) / (8 * sizeof(float));
 	// Initialize GLFW
 	glfwInit();
+
+	// Enable 32x Multisampling
+	glfwWindowHint(GLFW_SAMPLES, 32);
 
 	// Create a windowed mode window and its OpenGL context
 	GLFWwindow* window = glfwCreateWindow(width, height, "Assessment2", NULL, NULL);
@@ -342,10 +388,15 @@ int main() {
 		return -1;
 	}
 
+	// Get the maximum amount of samples allowed by querying openGL
+	int max_samples;
+	glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
+	printf("Max Samples Supported: %d\n", max_samples);
+
 	// Create a vertext shader and Fragment Shader using the Shader class.
 	GLuint brick_program = CompileShader("vertex_shader.vert", "fragment_shader.frag");
 	GLuint ship_program = CompileShader("vertex_shader.vert", "ship_frag.frag");
-	GLuint grass_program = CompileShader("vertex_shader.vert", "grass_frag.frag");
+	GLuint plane_program = CompileShader("vertex_shader.vert", "grass_frag.frag");
 	
 	// Initialise the cameras
 	initialise_cameras();
@@ -356,7 +407,7 @@ int main() {
 
 	// Texture to load.
 	GLuint brick_tex = setup_texture("bricks.jpg");
-	GLuint grass_tex = setup_texture("grass.jpg");
+	GLuint sand_tex = setup_texture("sand.jpg");
 
 	// Texture for the UFO object.
 	GLuint ship_tex;
@@ -380,7 +431,7 @@ int main() {
 		// Use the shader program
 		glUseProgram(brick_program);
 
-		// --- Draw the Triangle ---
+		// --- Draw the Pyramid ---
 		// Bind texture
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, brick_tex);
@@ -419,19 +470,25 @@ int main() {
 		// --- Draw the Plane ---
 		// Bind texture to plane
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, grass_tex);
-		glUniform1i(glGetUniformLocation(grass_program, "tex1"), 1);
+		glBindTexture(GL_TEXTURE_2D, sand_tex);
+		glUniform1i(glGetUniformLocation(plane_program, "tex"), 1);
 
 		glBindVertexArray(VAOs[1]);
 
 		glm::mat4 modelPlane = glm::mat4(1.0f);
-		modelPlane = glm::translate(modelPlane, glm::vec3(-5.5f, -0.1f, 5.5f));
-		glUniformMatrix4fv(glGetUniformLocation(grass_program, "model"), 1, GL_FALSE, glm::value_ptr(modelPlane));
-		// Use the same view and projection matrices as the triangle 
-		glUniformMatrix4fv(glGetUniformLocation(grass_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(grass_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		// Move to correct location
+		modelPlane = glm::translate(modelPlane, glm::vec3(0.f, 0.f, 0.0f));
+		// Rotate to be flat
+		modelPlane = glm::rotate(modelPlane, glm::radians(90.0f), glm::vec3(1.f, 0.f, 0.f));
+		// Stretch to correct size
+		modelPlane = glm::scale(modelPlane, glm::vec3(15.f, 15.f, 0.f));
 
-		int num_plane_vertices = planeVertices.size() / 5;
+		glUniformMatrix4fv(glGetUniformLocation(plane_program, "model"), 1, GL_FALSE, glm::value_ptr(modelPlane));
+		// Use the same view and projection matrices as the triangle 
+		glUniformMatrix4fv(glGetUniformLocation(plane_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(plane_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+		int num_plane_vertices = sizeof(square) / (8 * sizeof(float));
 		glDrawArrays(GL_TRIANGLES, 0, num_plane_vertices);
 
 
