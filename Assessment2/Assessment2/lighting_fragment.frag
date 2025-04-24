@@ -1,4 +1,3 @@
-
 #version 450 core
 
 layout (location = 0) out vec4 fColour;
@@ -15,7 +14,7 @@ uniform vec3 camPos;
 
 // Texture 
 in vec2 texCoords;
-uniform sampler2D tex;
+uniform sampler2D tex0;
 
 float CalculateDirectionalIllumination(){
     vec3 Nnor = normalize(nor);
@@ -31,7 +30,7 @@ float CalculateDirectionalIllumination(){
 
     float iSpec = pow(max(dot(NcamDirection, nRefLight), 0.f), 128.f);
 
-    float ambient = 0.3f; 
+    float ambient = 0.1f; 
     float phong = ambient + iDiff + iSpec;
 
     return phong;
@@ -46,7 +45,7 @@ void main()
     float phong = CalculateDirectionalIllumination();
 
     // Texture colour
-    vec4 texColor = texture(tex, texCoords);
+    vec4 texColor = texture(tex0, texCoords);
 
     fColour = vec4(phong * texColor.rgb * lightColour, texColor.a);
 }

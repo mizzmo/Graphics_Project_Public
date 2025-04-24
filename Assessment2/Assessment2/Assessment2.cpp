@@ -12,8 +12,11 @@
 #include "plane.h"
 #include "object_parser.h"
 
-#define NUM_VBO 3
-#define NUM_VAO 3
+// useful for picking colours
+// https://keiwando.com/color-picker/
+
+#define NUM_VBO 4
+#define NUM_VAO 4
 
 // Interactive Cameras
 SCamera Model_Viewer_Camera;
@@ -40,6 +43,8 @@ float orbit_speed = 0.00005f;
 // Center of the orbit
 glm::vec3 orbit_center(0.0f, 0.0f, 0.0f);
 
+glm::vec3 lightDirection = glm::vec3(-0.6f, -0.5f, 0.6f);
+glm::vec3 lightPos = glm::vec3(8.f, 7.f, -8.f);
 
 
 //std::vector<GLfloat> planeVertices;
@@ -56,66 +61,78 @@ GLuint VBOs[NUM_VBO];
 
 // Create an array of floats representing coordinates of a triangle.
 GLfloat vertices[] = {
-	// Coordinates, Colours, Texture
-	-1.0f, 0.0f, -1.0f,  	1.f, 0.0f, 0.0f,		0.0f, 0.0f,				//v1
-	-1.0f, 0.0f, 1.0f,      1.f, 0.0f, 0.0f,		1.0f, 0.0f,				//v2
-	0.0f, 1.0f, 0.0f,		1.f, 0.0f, 0.0f,		0.0f, 1.0f,				//v3
+	// Coordinates, Colours, Texture, Normal
+	-1.0f, 0.0f, -1.0f,  	1.f, 1.0f, 1.0f,		0.0f, 0.0f,		-1.f, 1.f, 0.f,		//v1
+	-1.0f, 0.0f, 1.0f,      1.f, 1.0f, 1.0f,		1.0f, 0.0f,		-1.f, 1.f, 0.f,		//v2
+	0.0f, 1.0f, 0.0f,		1.f, 1.0f, 1.0f,		0.0f, 1.0f,		-1.f, 1.f, 0.f,		//v3
 
 	//TB
 	//pos					//col			
-	1.0f, 0.0f, -1.0f,		0.f, 1.f, 0.0f,			0.0f, 0.0f,				//v1
-	-1.0f, 0.0f, -1.0f,		0.f, 1.f, 0.0f, 		1.0f, 0.0f,				//v2
-	0.0f, 1.0f, 0.0f,		0.0f, 1.f, 0.0f, 		0.0f, 1.0f,				//v3
+	1.0f, 0.0f, -1.0f,		1.f, 1.0f, 1.0f,			0.0f, 0.0f,		0.f, 1.f, -1.f,		//v1
+	-1.0f, 0.0f, -1.0f,		1.f, 1.0f, 1.0f, 		1.0f, 0.0f,		0.f, 1.f, -1.f,		//v2
+	0.0f, 1.0f, 0.0f,		1.f, 1.0f, 1.0f, 		0.0f, 1.0f,		0.f, 1.f, -1.f,		//v3
 
 	//TR
 	//pos					//col			
-	1.0f, 0.0f, 1.0f,  		0.0f, 0.0f, 1.f,		0.0f, 0.0f,				//v1
-	1.0f, 0.0f, -1.0f,		0.0f, 0.0f, 1.f,		1.0f, 0.0f,				//v2
-	0.0f, 1.0f, 0.0f,		0.0f, 0.0f, 1.f,		0.0f, 1.0f,				//v3
+	1.0f, 0.0f, 1.0f,  		1.f, 1.0f, 1.0f,		0.0f, 0.0f,		1.f, 1.f, 0.f,		//v1
+	1.0f, 0.0f, -1.0f,		1.f, 1.0f, 1.0f,		1.0f, 0.0f,		1.f, 1.f, 0.f,		//v2
+	0.0f, 1.0f, 0.0f,		1.f, 1.0f, 1.0f,		0.0f, 1.0f,		1.f, 1.f, 0.f,		//v3
 
 	//TF
 	//pos					//col			
-	-1.0f, 0.0f, 1.0f,  	1.f, 1.f, 0.0f,			0.0f, 0.0f,				//v1
-	1.0f, 0.0f, 1.0f,		1.f, 1.f, 0.0f,			1.0f, 0.0f,				//v2
-	0.0f, 1.0f, 0.0f,		1.f, 1.f, 0.0f,			0.0f, 1.0f,				//v3
+	-1.0f, 0.0f, 1.0f,  	1.f, 1.0f, 1.0f,			0.0f, 0.0f,		0.f, 1.f, 1.f,		//v1
+	1.0f, 0.0f, 1.0f,		1.f, 1.0f, 1.0f,			1.0f, 0.0f,		0.f, 1.f, 1.f,		//v2
+	0.0f, 1.0f, 0.0f,		1.f, 1.0f, 1.0f,			0.0f, 1.0f,		0.f, 1.f, 1.f,		//v3
 
 	//BL
 	//pos					//col			
-	-1.0f, 0.0f, -1.0f,  	1.f, 0.0f, 1.f,			0.0f, 0.0f,				//v1
-	-1.0f, 0.0f, 1.0f,      1.f, 0.0f, 1.f,			1.0f, 0.0f,				//v2
-	0.0f, -1.0f, 0.0f,      1.f, 0.0f, 1.f,			0.0f, 1.0f,				//v3
+	-1.0f, 0.0f, -1.0f,  	1.f, 1.0f, 1.0f,			0.0f, 0.0f,		-1.f, -1.f, 0.f,		//v1
+	-1.0f, 0.0f, 1.0f,      1.f, 1.0f, 1.0f,			1.0f, 0.0f,		-1.f, -1.f, 0.f,		//v2
+	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f,			0.0f, 1.0f,		-1.f, -1.f, 0.f,		//v3
 
 	//BB
 	//pos					//col			
-	1.0f, 0.0f, -1.0f,      0.f, 1.f,  1.f,			0.0f, 0.0f,				//v1
-	-1.0f, 0.0f, -1.0f,     0.f, 1.f,  1.f, 		1.0f, 0.0f,				//v2
-	0.0f, -1.0f, 0.0f,      0.f, 1.f,  1.f, 		0.0f, 1.0f,				//v3
+	1.0f, 0.0f, -1.0f,      1.f, 1.0f, 1.0f,			0.0f, 0.0f,		0.f, -1.f, -1.f,		//v1
+	-1.0f, 0.0f, -1.0f,     1.f, 1.0f, 1.0f, 		1.0f, 0.0f,		0.f, -1.f, -1.f,		//v2
+	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f, 		0.0f, 1.0f,		0.f, -1.f, -1.f,		//v3
 
 	//BR
 	//pos					//col			
-	1.0f, 0.0f, 1.0f,  	   0.5f, 0.5f, 0.f,			0.0f, 0.0f,				//v1
-	1.0f, 0.0f, -1.0f,     0.5f, 0.5f, 0.f,			1.0f, 0.0f,				//v2
-	0.0f, -1.0f, 0.0f,     0.5f, 0.5f, 0.f,			0.0f, 1.0f,				//v3
+	1.0f, 0.0f, 1.0f,  	    1.f, 1.0f, 1.0f,			0.0f, 0.0f,		1.f, -1.f, 0.f,		//v1
+	1.0f, 0.0f, -1.0f,      1.f, 1.0f, 1.0f,			1.0f, 0.0f,		1.f, -1.f, 0.f,		//v2
+	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f,			0.0f, 1.0f,		1.f, -1.f, 0.f,		//v3
 
 	//BF
 	//pos					//col			
-	-1.0f, 0.0f, 1.0f,  	0.5f, 0.0f, 0.0f,		0.0f, 0.0f,				//v1
-	1.0f, 0.0f, 1.0f,       0.5f, 0.f,  0.0f,		1.0f, 0.0f,				//v2
-	0.0f, -1.0f, 0.0f,      0.5f, 0.f,  0.0f,		0.0f, 1.0f,				//v3
+	-1.0f, 0.0f, 1.0f,  	1.f, 1.0f, 1.0f,		0.0f, 0.0f,		0.f, -1.f, 1.f,		//v1
+	1.0f, 0.0f, 1.0f,       1.f, 1.0f, 1.0f,		1.0f, 0.0f,		0.f, -1.f, 1.f,		//v2
+	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f,		0.0f, 1.0f,		0.f, -1.f, 1.f,		//v3
 };
 
 GLfloat square[] = {
 	// Top Left, Top Right, Bottom Right.
-	// R, G, B, Texture Coordinates.
+	// X, Y, Z, R, G, B, Texture Coordinates, Normal.
 	// Top Right Triangle.
-	-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f,
-	0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 10.0f, 10.0f,
-	0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 10.0f, 0.0f,
+	-0.5f, 0.5f, 0.0f,		1.f, 1.0f, 1.0f,		0.0f, 10.0f,		0.f, 1.f, 0.f,
+	0.5f, 0.5f, 0.0f,		1.f, 1.0f, 1.0f,		10.0f, 10.0f,		0.f, 1.f, 0.f,
+	0.5f, -0.5f, 0.0f,		1.f, 1.0f, 1.0f,		10.0f, 0.0f,		0.f, 1.f, 0.f,
+
 	// Bottom Left Triangle
-	// Top Left, Bottom Right, Bottom Left
-	-0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f,
-	0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 10.0f, 0.0f,
-	-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+	-0.5f, 0.5f, 0.0f,		1.f, 1.0f, 1.0f,		0.0f, 10.0f,		0.f, 1.f, 0.f,
+	0.5f, -0.5f, 0.0f,		1.f, 1.0f, 1.0f,		10.0f, 0.0f,		0.f, 1.f, 0.f,
+	-0.5f, -0.5f, 0.0f,		1.f, 1.0f, 1.0f,		0.0f, 0.0f,			0.f, 1.f, 0.f,
+};
+
+GLfloat flat_square[] = {
+	// X,   Y,   Z,      R,  G,  B,      U,   V,      Nx,  Ny, Nz
+	// Top face
+	-0.5f, 0.0f, 0.5f, 1.f, 1.f, 1.f, 0.0f, 10.0f, 0.f, 1.f, 0.f,
+	0.5f, 0.0f, 0.5f, 1.f, 1.f, 1.f, 10.0f, 10.0f, 0.f, 1.f, 0.f,
+	0.5f, 0.0f, -0.5f, 1.f, 1.f, 1.f, 10.0f, 0.0f, 0.f, 1.f, 0.f,
+
+	-0.5f, 0.0f, 0.5f, 1.f, 1.f, 1.f, 0.0f, 10.0f, 0.f, 1.f, 0.f,
+	0.5f, 0.0f, -0.5f, 1.f, 1.f, 1.f, 10.0f, 0.0f, 0.f, 1.f, 0.f,
+	-0.5f, 0.0f, -0.5f, 1.f, 1.f, 1.f, 0.0f, 0.0f, 0.f, 1.f, 0.f,
 };
 
 
@@ -125,6 +142,15 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	// Handle key presses
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
+	{
+		lightDirection = activeCamera->Front;
+		printf("Light Direction: %f %f %f\n", lightDirection.x, lightDirection.y, lightDirection.z);
+		printf("Camera Position: %f %f %f\n", activeCamera->Position.x, activeCamera->Position.y, activeCamera->Position.z);
+	}
+		
+		
 	
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 		// Switch between cameras
@@ -253,6 +279,8 @@ void ResizeCallback(GLFWwindow*, int w, int h)
 void initialise_buffers() {
 	// Generate number of VAOs
 	glGenVertexArrays(NUM_VAO, VAOs);
+
+	// ---------- PYRAMID ----------
 	// Bind VAO 0 (for the triangle)
 	glBindVertexArray(VAOs[0]);
 	// Generate number of VBOs
@@ -261,39 +289,43 @@ void initialise_buffers() {
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
 	// Store vertices in VBO
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// Configure VAO 0 (triangle)
 	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// Colour attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	// Texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
+	// Normal attribute
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
 
-	// Bind VAO 1 (for the plane)
+
+	// ---------- PLANE ----------
 	glBindVertexArray(VAOs[1]);
-	// Bind VBO 1 (for the plane vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
 	// Generate the vertices for the plane.
 	//planeVertices = generate_plane(10, 1.0f);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), square, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(square), square, GL_STATIC_DRAW);
 	// Position Attribute for the plane
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0); 
-
 	// Colour Attribute for the plane
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	// Texture attribute for plane.
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,11 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
+	// Normal attribute for plane.
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
 
-	// Configure VAO 2 (object 1)
+	//  ---------- UFO ----------
+	// Configure VAO 2 (UFO)
 	glBindVertexArray(VAOs[2]);
-	// Bind VBO 2 (for the plane vertices)
+	// Bind VBO 2 (for the UFO vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);	
 	// Load an Object
 	std::vector<triangle> triangles;
@@ -314,6 +346,26 @@ void initialise_buffers() {
 	// Texture attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
+
+
+	// ---- TEST PLANE ----
+	glBindVertexArray(VAOs[3]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[3]);
+
+	// Generate the vertices for the plane.
+	glBufferData(GL_ARRAY_BUFFER, sizeof(flat_square), flat_square, GL_STATIC_DRAW);
+	// Position Attribute for the plane
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// Colour Attribute for the plane
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// Texture attribute for plane.
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	// Normal attribute for plane.
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
 
 
 	// Unbind buffers and VAO
@@ -362,8 +414,8 @@ int main() {
 	// Initialize GLFW
 	glfwInit();
 
-	// Enable 32x Multisampling
-	glfwWindowHint(GLFW_SAMPLES, 32);
+	// Enable 8x Multisampling
+	glfwWindowHint(GLFW_SAMPLES, 8);
 
 	// Create a windowed mode window and its OpenGL context
 	GLFWwindow* window = glfwCreateWindow(width, height, "Assessment2", NULL, NULL);
@@ -394,13 +446,13 @@ int main() {
 	printf("Max Samples Supported: %d\n", max_samples);
 
 	// Create a vertext shader and Fragment Shader using the Shader class.
-	GLuint brick_program = CompileShader("vertex_shader.vert", "fragment_shader.frag");
+	GLuint pyramid_program = CompileShader("lighting_vertex.vert", "lighting_fragment.frag");
 	GLuint ship_program = CompileShader("vertex_shader.vert", "ship_frag.frag");
-	GLuint plane_program = CompileShader("vertex_shader.vert", "grass_frag.frag");
+	GLuint plane_program = CompileShader("lighting_vertex.vert", "grass_frag.frag");
+	GLuint basic_shader = CompileShader("vertex_shader.vert", "fragment_shader.frag");
 	
 	// Initialise the cameras
 	initialise_cameras();
-	
 
 	// Create VAO and VBOs
 	initialise_buffers();
@@ -428,27 +480,31 @@ int main() {
 		glClearColor(0.01f, 0.01f, 0.27f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Use the shader program
-		glUseProgram(brick_program);
 
 		// --- Draw the Pyramid ---
+		// Use the shader program
+		glUseProgram(pyramid_program);
 		// Bind texture
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, brick_tex);
-		glUniform1i(glGetUniformLocation(brick_program, "tex0"), 0);
+		glUniform1i(glGetUniformLocation(pyramid_program, "tex0"), 0);
+
+		glUniform3f(glGetUniformLocation(pyramid_program, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
+		glUniform3f(glGetUniformLocation(pyramid_program, "lightColour"), 1.f, 0.98f, 0.7f);
+		glUniform3f(glGetUniformLocation(pyramid_program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
 		glBindVertexArray(VAOs[0]);
 
 		glm::mat4 modelTriangle = glm::mat4(1.0f);
 		modelTriangle = glm::scale(modelTriangle, glm::vec3(1.f, 1.f, 1.f));
-		glUniformMatrix4fv(glGetUniformLocation(brick_program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
+		glUniformMatrix4fv(glGetUniformLocation(pyramid_program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
 		glm::mat4 view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
-		glUniformMatrix4fv(glGetUniformLocation(brick_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(pyramid_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
-		glUniformMatrix4fv(glGetUniformLocation(brick_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(pyramid_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-		int num_vertices = sizeof(vertices) / (8 * sizeof(float));
+		int num_vertices = sizeof(vertices) / (11 * sizeof(float));
 		glDrawArrays(GL_TRIANGLES, 0, num_vertices);
 
 
@@ -468,10 +524,15 @@ int main() {
 		}
 
 		// --- Draw the Plane ---
+		glUseProgram(plane_program);
 		// Bind texture to plane
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, sand_tex);
 		glUniform1i(glGetUniformLocation(plane_program, "tex"), 1);
+
+		glUniform3f(glGetUniformLocation(plane_program, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
+		glUniform3f(glGetUniformLocation(plane_program, "lightColour"), 1.f, 1.f, 1.f);
+		glUniform3f(glGetUniformLocation(plane_program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
 		glBindVertexArray(VAOs[1]);
 
@@ -488,8 +549,8 @@ int main() {
 		glUniformMatrix4fv(glGetUniformLocation(plane_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(plane_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-		int num_plane_vertices = sizeof(square) / (8 * sizeof(float));
-		glDrawArrays(GL_TRIANGLES, 0, num_plane_vertices);
+		int num_plane_vertices = sizeof(square) / (11 * sizeof(float));
+		//glDrawArrays(GL_TRIANGLES, 0, num_plane_vertices);
 
 
 		// --- Draw the UFO ---
@@ -518,6 +579,20 @@ int main() {
 		// Draw the UFO
 		glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 
+		// -- Daw the test plane ---
+		glUseProgram(plane_program);
+
+		glBindVertexArray(VAOs[3]);
+
+		glm::mat4 modelTestPlane = glm::mat4(1.0f);
+		modelTestPlane = glm::translate(modelTestPlane, glm::vec3(0.f, 0.f, 0.f));
+		modelTestPlane = glm::scale(modelTestPlane, glm::vec3(15.f, 15.f, 15.f));
+		glUniformMatrix4fv(glGetUniformLocation(plane_program, "model"), 1, GL_FALSE, glm::value_ptr(modelTestPlane));
+		glUniformMatrix4fv(glGetUniformLocation(plane_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(plane_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+		glDrawArrays(GL_TRIANGLES, 0, sizeof(flat_square) / (11 * sizeof(float)));
+
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -527,7 +602,7 @@ int main() {
 	glDeleteVertexArrays(NUM_VAO, VAOs);
 	glDeleteBuffers(NUM_VBO, VBOs);
 	// Delete the shader program
-	glDeleteProgram(brick_program);
+	glDeleteProgram(pyramid_program);
 
 	// Remove the window
 	glfwDestroyWindow(window);
