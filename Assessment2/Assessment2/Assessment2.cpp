@@ -44,7 +44,7 @@ float orbit_speed = 0.00005f;
 glm::vec3 orbit_center(0.0f, 0.0f, 0.0f);
 
 glm::vec3 lightDirection = glm::vec3(-0.6f, -0.5f, 0.6f);
-glm::vec3 lightPos = glm::vec3(8.f, 7.f, -8.f);
+glm::vec3 lightPos = glm::vec3(10.f, 9.f, -9.f);
 
 
 //std::vector<GLfloat> planeVertices;
@@ -109,19 +109,6 @@ GLfloat vertices[] = {
 	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f,		0.0f, 1.0f,		0.f, -1.f, 1.f,		//v3
 };
 
-GLfloat square[] = {
-	// Top Left, Top Right, Bottom Right.
-	// X, Y, Z, R, G, B, Texture Coordinates, Normal.
-	// Top Right Triangle.
-	-0.5f, 0.5f, 0.0f,		1.f, 1.0f, 1.0f,		0.0f, 10.0f,		0.f, 1.f, 0.f,
-	0.5f, 0.5f, 0.0f,		1.f, 1.0f, 1.0f,		10.0f, 10.0f,		0.f, 1.f, 0.f,
-	0.5f, -0.5f, 0.0f,		1.f, 1.0f, 1.0f,		10.0f, 0.0f,		0.f, 1.f, 0.f,
-
-	// Bottom Left Triangle
-	-0.5f, 0.5f, 0.0f,		1.f, 1.0f, 1.0f,		0.0f, 10.0f,		0.f, 1.f, 0.f,
-	0.5f, -0.5f, 0.0f,		1.f, 1.0f, 1.0f,		10.0f, 0.0f,		0.f, 1.f, 0.f,
-	-0.5f, -0.5f, 0.0f,		1.f, 1.0f, 1.0f,		0.0f, 0.0f,			0.f, 1.f, 0.f,
-};
 
 GLfloat flat_square[] = {
 	// X,   Y,   Z,      R,  G,  B,      U,   V,      Nx,  Ny, Nz
@@ -303,25 +290,6 @@ void initialise_buffers() {
 	glEnableVertexAttribArray(3);
 
 
-	// ---------- PLANE ----------
-	glBindVertexArray(VAOs[1]);
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
-	// Generate the vertices for the plane.
-	//planeVertices = generate_plane(10, 1.0f);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(square), square, GL_STATIC_DRAW);
-	// Position Attribute for the plane
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0); 
-	// Colour Attribute for the plane
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	// Texture attribute for plane.
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,11 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-	// Normal attribute for plane.
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
-	glEnableVertexAttribArray(3);
-
 	//  ---------- UFO ----------
 	// Configure VAO 2 (UFO)
 	glBindVertexArray(VAOs[2]);
@@ -348,7 +316,7 @@ void initialise_buffers() {
 	glEnableVertexAttribArray(2);
 
 
-	// ---- TEST PLANE ----
+	// ---- FLAT PLANE ----
 	glBindVertexArray(VAOs[3]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[3]);
 
@@ -523,34 +491,7 @@ int main() {
 			MoveAndOrientCamera(Fixed_Rotate_Camera, orbit_center, orbit_radius, xoffset, yoffset);
 		}
 
-		// --- Draw the Plane ---
-		glUseProgram(plane_program);
-		// Bind texture to plane
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, sand_tex);
-		glUniform1i(glGetUniformLocation(plane_program, "tex"), 1);
-
-		glUniform3f(glGetUniformLocation(plane_program, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
-		glUniform3f(glGetUniformLocation(plane_program, "lightColour"), 1.f, 1.f, 1.f);
-		glUniform3f(glGetUniformLocation(plane_program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-
-		glBindVertexArray(VAOs[1]);
-
-		glm::mat4 modelPlane = glm::mat4(1.0f);
-		// Move to correct location
-		modelPlane = glm::translate(modelPlane, glm::vec3(0.f, 0.f, 0.0f));
-		// Rotate to be flat
-		modelPlane = glm::rotate(modelPlane, glm::radians(90.0f), glm::vec3(1.f, 0.f, 0.f));
-		// Stretch to correct size
-		modelPlane = glm::scale(modelPlane, glm::vec3(15.f, 15.f, 0.f));
-
-		glUniformMatrix4fv(glGetUniformLocation(plane_program, "model"), 1, GL_FALSE, glm::value_ptr(modelPlane));
-		// Use the same view and projection matrices as the triangle 
-		glUniformMatrix4fv(glGetUniformLocation(plane_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(plane_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-		int num_plane_vertices = sizeof(square) / (11 * sizeof(float));
-		//glDrawArrays(GL_TRIANGLES, 0, num_plane_vertices);
+		
 
 
 		// --- Draw the UFO ---
@@ -579,8 +520,18 @@ int main() {
 		// Draw the UFO
 		glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 
-		// -- Daw the test plane ---
+		// -- Daw the Flat plane ---
 		glUseProgram(plane_program);
+
+		// Bind texture to plane
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, sand_tex);
+		glUniform1i(glGetUniformLocation(plane_program, "tex"), 1);
+
+		// Configure Light 
+		glUniform3f(glGetUniformLocation(plane_program, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
+		glUniform3f(glGetUniformLocation(plane_program, "lightColour"), 1.f, 1.f, 1.f);
+		glUniform3f(glGetUniformLocation(plane_program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
 		glBindVertexArray(VAOs[3]);
 
