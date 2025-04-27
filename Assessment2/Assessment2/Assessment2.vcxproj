@@ -154,6 +154,8 @@
     <None Include="grass_frag.frag" />
     <None Include="lighting_fragment.frag" />
     <None Include="lighting_vertex.vert" />
+    <None Include="shadow.frag" />
+    <None Include="shadow.vert" />
     <None Include="ship_frag.frag" />
     <None Include="fragment_shader.frag" />
     <None Include="vertex_shader.vert" />

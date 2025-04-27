@@ -11,12 +11,16 @@
 #include "camera.h"
 #include "plane.h"
 #include "object_parser.h"
+#include "shadow.h"
 
 // useful for picking colours
 // https://keiwando.com/color-picker/
 
 #define NUM_VBO 4
 #define NUM_VAO 4
+
+unsigned int width = 800;
+unsigned int height = 600;
 
 // Interactive Cameras
 SCamera Model_Viewer_Camera;
@@ -45,6 +49,10 @@ glm::vec3 orbit_center(0.0f, 0.0f, 0.0f);
 
 glm::vec3 lightDirection = glm::vec3(-0.6f, -0.5f, 0.6f);
 glm::vec3 lightPos = glm::vec3(10.f, 9.f, -9.f);
+
+// Shadows
+#define SH_MAP_WIDTH 2048
+#define SH_MAP_HEIGHT 2048
 
 
 //std::vector<GLfloat> planeVertices;
@@ -374,9 +382,85 @@ void initialise_cameras() {
 	MoveAndOrientCamera(Fixed_Rotate_Camera, glm::vec3(0.f, 0.f, 0.f), cam_dist, -15.f, -10.f);
 }
 
+void draw_pyramid_plane(unsigned int program) {
+	// Pyramid
+	glBindVertexArray(VAOs[0]);
+	glm::mat4 modelTriangle = glm::mat4(1.0f);
+	modelTriangle = glm::scale(modelTriangle, glm::vec3(1.f, 1.f, 1.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
+	int num_vertices = sizeof(vertices) / (11 * sizeof(float));
+	glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+
+	// Flat Plane
+	glBindVertexArray(VAOs[3]);
+	glm::mat4 modelFlatPlane = glm::mat4(1.0f);
+	modelFlatPlane = glm::translate(modelFlatPlane, glm::vec3(0.f, 0.f, 0.f));
+	modelFlatPlane = glm::scale(modelFlatPlane, glm::vec3(15.f, 15.f, 15.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelFlatPlane));
+	glDrawArrays(GL_TRIANGLES, 0, sizeof(flat_square) / (11 * sizeof(float)));
+}
+
+void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
+	// Set the viewport to the size of the shadow map
+	glViewport(0, 0, SH_MAP_WIDTH, SH_MAP_HEIGHT);
+
+	// Bind the framebuffer for the shadow map
+	glBindFramebuffer(GL_FRAMEBUFFER, shadow.FBO);
+
+	// Clear the depth buffer of the framebuffer
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	// Use the shadow shader program
+	glUseProgram(shadowShaderProgram);
+
+	// Set the uniform for the light space matrix in the shader
+	glUniformMatrix4fv(glGetUniformLocation(shadowShaderProgram, "projectedLightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(projectedLightSpaceMatrix));
+
+	// Draw the floor and cubes using the shadow shader
+	draw_pyramid_plane(shadowShaderProgram);
+
+	// Unbind the framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix, GLuint texture) {
+	glViewport(0, 0, width, height);
+
+	static const GLfloat bgd[] = { .8f, .8f, .8f, 1.f };
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glUseProgram(renderShaderProgram);
+
+	// Bind shadow map to texture unit 1
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, shadow.Texture);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "shadowMap"), 1);
+
+	// Bind brick texture to texture unit 0
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 0);
+
+
+	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "projectedLightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(projectedLightSpaceMatrix));
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightColour"), 1.f, 0.98f, 0.7f);
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "camPos"), activeCamera->Position.x, activeCamera->Position.y, activeCamera->Position.z);
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+
+	glm::mat4 view = glm::mat4(1.f);
+	view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
+	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+	glm::mat4 projection = glm::mat4(1.f);
+	projection = glm::perspective(glm::radians(45.f), (float)width / (float)height, .01f, 100.f);
+	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+	draw_pyramid_plane(renderShaderProgram);
+}
+
 int main() {
-	unsigned int width = 800;
-	unsigned int height = 600;
+	
 	// Calculate number of vertices in the array
 	int num_vertices = sizeof(vertices) / (8 * sizeof(float));
 	// Initialize GLFW
@@ -413,11 +497,14 @@ int main() {
 	glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
 	printf("Max Samples Supported: %d\n", max_samples);
 
+	ShadowStruct shadow = setup_shadowmap(SH_MAP_WIDTH, SH_MAP_HEIGHT);
+
 	// Create a vertext shader and Fragment Shader using the Shader class.
 	GLuint pyramid_program = CompileShader("lighting_vertex.vert", "lighting_fragment.frag");
 	GLuint ship_program = CompileShader("vertex_shader.vert", "ship_frag.frag");
 	GLuint plane_program = CompileShader("lighting_vertex.vert", "grass_frag.frag");
 	GLuint basic_shader = CompileShader("vertex_shader.vert", "fragment_shader.frag");
+	GLuint shadow_shader = CompileShader("shadow.vert", "shadow.frag");
 	
 	// Initialise the cameras
 	initialise_cameras();
@@ -433,7 +520,9 @@ int main() {
 	GLuint ship_tex;
 	ship_tex = setup_texture("objs/simple_ufo/source/UFO/TexturesCom_MetalAircraft0050_1_S lrg.jpg");
 
-	glActiveTexture(GL_TEXTURE2); // Texture unit 2
+
+	// Texture unit 2
+	glActiveTexture(GL_TEXTURE2); 
 	glBindTexture(GL_TEXTURE_2D, ship_tex);
 
 	// Pass the texture units to the shader 
@@ -452,30 +541,17 @@ int main() {
 		// --- Draw the Pyramid ---
 		// Use the shader program
 		glUseProgram(pyramid_program);
-		// Bind texture
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, brick_tex);
-		glUniform1i(glGetUniformLocation(pyramid_program, "tex0"), 0);
 
-		glUniform3f(glGetUniformLocation(pyramid_program, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
-		glUniform3f(glGetUniformLocation(pyramid_program, "lightColour"), 1.f, 0.98f, 0.7f);
-		glUniform3f(glGetUniformLocation(pyramid_program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-
-		glBindVertexArray(VAOs[0]);
-
-		glm::mat4 modelTriangle = glm::mat4(1.0f);
-		modelTriangle = glm::scale(modelTriangle, glm::vec3(1.f, 1.f, 1.f));
-		glUniformMatrix4fv(glGetUniformLocation(pyramid_program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
-		glm::mat4 view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
-		glUniformMatrix4fv(glGetUniformLocation(pyramid_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
-		glUniformMatrix4fv(glGetUniformLocation(pyramid_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-		int num_vertices = sizeof(vertices) / (11 * sizeof(float));
-		glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+		// Create a Projected Light Space Matrix
+		float near_plane = 1.0f, far_plane = 70.5f;
+		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, near_plane, far_plane);
+		glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 projectedLightSpaceMatrix = lightProjection * lightView;
 
 
+		generateDepthMap(shadow_shader, shadow, projectedLightSpaceMatrix);
+		// Render the pyramid with a shadow map
+		renderWithShadow(pyramid_program, shadow, projectedLightSpaceMatrix, brick_tex);
 
 		// Handle Orbiting Camera
 		// Orbiting camera
@@ -491,7 +567,8 @@ int main() {
 			MoveAndOrientCamera(Fixed_Rotate_Camera, orbit_center, orbit_radius, xoffset, yoffset);
 		}
 
-		
+		glm::mat4 view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
 
 
 		// --- Draw the UFO ---
@@ -520,29 +597,7 @@ int main() {
 		// Draw the UFO
 		glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 
-		// -- Daw the Flat plane ---
-		glUseProgram(plane_program);
-
-		// Bind texture to plane
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, sand_tex);
-		glUniform1i(glGetUniformLocation(plane_program, "tex"), 1);
-
-		// Configure Light 
-		glUniform3f(glGetUniformLocation(plane_program, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
-		glUniform3f(glGetUniformLocation(plane_program, "lightColour"), 1.f, 1.f, 1.f);
-		glUniform3f(glGetUniformLocation(plane_program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-
-		glBindVertexArray(VAOs[3]);
-
-		glm::mat4 modelTestPlane = glm::mat4(1.0f);
-		modelTestPlane = glm::translate(modelTestPlane, glm::vec3(0.f, 0.f, 0.f));
-		modelTestPlane = glm::scale(modelTestPlane, glm::vec3(15.f, 15.f, 15.f));
-		glUniformMatrix4fv(glGetUniformLocation(plane_program, "model"), 1, GL_FALSE, glm::value_ptr(modelTestPlane));
-		glUniformMatrix4fv(glGetUniformLocation(plane_program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(plane_program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-		glDrawArrays(GL_TRIANGLES, 0, sizeof(flat_square) / (11 * sizeof(float)));
+		
 
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);

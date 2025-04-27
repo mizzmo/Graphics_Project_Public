@@ -9,10 +9,12 @@ out vec3 colour;
 out vec2 texCoords;
 out vec3 nor;
 out vec3 FragPosWorldSpace;
+out vec4 FragPosProjectedLightSpace;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 projectedLightSpaceMatrix;
 
 
 
@@ -23,4 +25,5 @@ void main()
 	texCoords = vTexture;
 	nor = mat3(transpose(inverse(model))) * vNor;
 	FragPosWorldSpace = vec3(model * vPos);
+	FragPosProjectedLightSpace = projectedLightSpaceMatrix * model * vPos;
 }

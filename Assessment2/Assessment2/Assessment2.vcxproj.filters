@@ -85,6 +85,12 @@
     <None Include="lighting_fragment.frag">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="shadow.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="shadow.frag">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="grid.bmp">
