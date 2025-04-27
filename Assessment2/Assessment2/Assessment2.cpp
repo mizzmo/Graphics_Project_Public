@@ -460,9 +460,6 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 }
 
 int main() {
-	
-	// Calculate number of vertices in the array
-	int num_vertices = sizeof(vertices) / (8 * sizeof(float));
 	// Initialize GLFW
 	glfwInit();
 
@@ -543,9 +540,14 @@ int main() {
 		glUseProgram(pyramid_program);
 
 		// Create a Projected Light Space Matrix
-		float near_plane = 1.0f, far_plane = 70.5f;
-		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, near_plane, far_plane);
-		glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
+		// Adjust these parameters based on your scene size
+		float near_plane = 0.1f, far_plane = 20.0f;
+		// Use tighter bounds that just cover your scene
+		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+
+		// Make sure light position is far enough away in the direction opposite to light direction
+		lightPos = -lightDirection * 10.0f; // Position the light source far away
+		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 projectedLightSpaceMatrix = lightProjection * lightView;
 
 

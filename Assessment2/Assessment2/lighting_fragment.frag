@@ -20,34 +20,39 @@ in vec2 texCoords;
 uniform sampler2D tex0;
 
 
-float shadowOnFragment(vec4 FragPosProjectedLightSpace){
-    // Convert the projected fragment position to normalized device coordinates (NDC)
-    vec3 ndc = FragPosProjectedLightSpace.xyz / FragPosProjectedLightSpace.w;
-
-    // Scale and bias the NDC to get screen-space coordinates
-    vec3 ss = (ndc + 1) * 0.5;
-
-    // Get the depth of the fragment from the screen-space coordinates
-    float fragDepth = ss.z;
-
-    // Initialize the shadow value to 0 (no shadow)
-    float shadow = 0.f;
-
-    // Sample the depth from the shadow map at the screen-space coordinates
-    float litDepth = texture(shadowMap, ss.xy).r;
-
-    vec3 Nnor = normalize(nor);
-    vec3 Ntolight = normalize(-lightDirection);
-    float bias = max(0.05 * (1.0 - dot(Nnor, Ntolight)) ,0.005);
-
-    // Compare the fragment depth to the depth from the shadow map to determine if the fragment is in shadow
-    shadow = fragDepth > (litDepth+bias) ? 1.0 : 0.0;
-
-    if(fragDepth > 1){
-        shadow = 0.f;
+float shadowOnFragment(vec4 FragPosProjectedLightSpace) {
+    // Perspective division
+    vec3 projCoords = FragPosProjectedLightSpace.xyz / FragPosProjectedLightSpace.w;
+    
+    // Transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    
+    // Check if fragment is outside the far plane of light's frustum
+    if(projCoords.z > 1.0)
+        return 0.0;
+    
+    // Get closest depth value from light's perspective
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    
+    // Get current depth value
+    float currentDepth = projCoords.z;
+    
+    // Calculate bias based on depth texture resolution and slope
+    vec3 normal = normalize(nor);
+    vec3 lightDir = normalize(-lightDirection);
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    
+    // Perform Percentage Closer Filtering
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for(int x = -1; x <= 1; ++x) {
+        for(int y = -1; y <= 1; ++y) {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+        }    
     }
-
-    // Return the shadow value
+    shadow /= 9.0;
+    
     return shadow;
 }
 
