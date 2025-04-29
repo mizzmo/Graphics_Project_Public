@@ -142,8 +142,6 @@ GLfloat flat_square[] = {
 };
 
 
-
-
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Handle key presses
@@ -252,8 +250,6 @@ void ProcessInput(GLFWwindow* window, SCamera& camera, float deltaTime)
 
 }
 
-
-
 vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles) {
 	// Each triangle has 3 vertices, each vertex has 12 floats
 	// (x, y, z, r, g, b, nx, ny, nz, s, t) -> 3 * 11 = 33 floats per triangle
@@ -319,7 +315,6 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos)
 	// Apply offset
 	OrientFirstPersonCamera(*activeCamera, xoffset, yoffset);
 }
-
 
 void initialise_buffers() {
 	// Generate number of VAOs
@@ -519,14 +514,13 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 
 	glUseProgram(renderShaderProgram);
 
-	// Bind shadow map to texture unit 0
+	// Activate and Bind shadow map to texture unit 0
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, shadow.Texture);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "shadowMap"), 0);
 
-	// Bind brick texture to texture unit 2
+	// Activate brick texture in texture unit 2
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, brick_tex);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 2);
 
 	// For the regular objects, set to false
@@ -552,29 +546,31 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 
 	draw_pyramid(renderShaderProgram);
 
+	// ---- Flat Plane ----
+	// Activate sand texture in texture unit 1
+	glActiveTexture(GL_TEXTURE1);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 1);
+	draw_flat_plane(renderShaderProgram);
+
 	// ---- UFO ----
-	// Bind UFO texture to texture unit 3
+	// Activate textures for UFO
+	// Texture Unit 3 - UFO Diffuse
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, ship_tex);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 3);
-	// Bind UFO glow to texture unit 4
+	// Texture Unit 4 - UFO Glow
 	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, ship_glow);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "glow_map"), 4);
 	// Texture unit 5 - UFO Normal
 	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, ship_normal);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "normal_map"), 5);
 	// Texture unit 6 - UFO Specular
 	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_2D, ship_specular);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "specular_map"), 6);
 	// Texture unit 7 - UFO Bump
 	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, ship_bump);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "bump_map"), 7);
 
-
+	// Activate Maps in Fragment Shader
 	// Activate the glow map
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_glow"), true);
 	// Activate the normal map
@@ -585,21 +581,6 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "bump_scale"), 0.1f);
 
 	draw_ufo(renderShaderProgram);
-	// Deactivate the advanced maps etc
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_glow"), false);
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), false);
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_specular"), false);
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "bump_scale"), 0.0f);
-
-	// ---- Flat Plane ----
-	// Bind sand texture to texture unit 1
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, sand_tex);
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 1);
-
-	
-
-	draw_flat_plane(renderShaderProgram);
 
 }
 
@@ -626,8 +607,9 @@ int main() {
 	glfwSetKeyCallback(window, KeyCallback);
 	// Set callback for window resize
 	glfwSetWindowSizeCallback(window, ResizeCallback);
-
+	// Tracks mouse cursor
 	glfwSetCursorPosCallback(window, MouseCallback);
+	// Make cursor invisible
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// Init gl3w after making context.
@@ -645,7 +627,6 @@ int main() {
 
 	// Create a vertext shader and Fragment Shader using the Shader class.
 	GLuint lighting_program = CompileShader("lighting_vertex.vert", "lighting_fragment.frag");
-	GLuint ship_program = CompileShader("vertex_shader.vert", "ship_frag.frag");
 	GLuint shadow_shader = CompileShader("shadow.vert", "shadow.frag");
 	
 	// Initialise the cameras
@@ -663,8 +644,10 @@ int main() {
 	ship_normal = setup_texture("objs/ufo/ufo_normal.png");
 	ship_specular = setup_texture("objs/ufo/ufo_spec.png");
 	ship_bump = setup_texture("objs/ufo/Map__7_Normal_Bump.tga");
+
 	// Texture Unit 0 is used for Shadow Mapping.
 
+	// Bind to texture units
 	// Texture unit 1 - Sand
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, sand_tex);
@@ -676,27 +659,22 @@ int main() {
 	// Texture unit 3 - UFO Diffuse
 	glActiveTexture(GL_TEXTURE3); 
 	glBindTexture(GL_TEXTURE_2D, ship_tex);
-	glUniform1i(glGetUniformLocation(ship_program, "ship_tex"), 3);
 
 	// Texture unit 4 - UFO Glow
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, ship_glow);
-	glUniform1i(glGetUniformLocation(ship_program, "glow_map"), 4);
 
 	// Texture unit 5 - UFO Normal
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, ship_normal);
-	glUniform1i(glGetUniformLocation(ship_program, "normal_map"), 5);
 
 	// Texture unit 6 - UFO Specular
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, ship_specular);
-	glUniform1i(glGetUniformLocation(ship_program, "specular_map"), 6);
 
 	// Texture unit 7 - UFO Bump
 	glActiveTexture(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_2D, ship_bump);
-	glUniform1i(glGetUniformLocation(ship_program, "bump_map"), 7);
 
 
 	// Account for depth of 3D objects.
@@ -707,8 +685,6 @@ int main() {
 		glClearColor(0.01f, 0.01f, 0.27f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-		// --- Draw the Pyramid ---
 		// Use the shader program
 		glUseProgram(lighting_program);
 
@@ -719,7 +695,7 @@ int main() {
 		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 
 		// Make sure light position is far enough away in the direction opposite to light direction
-		lightPos = -lightDirection * 10.0f; // Position the light source far away
+		lightPos = -lightDirection * 10.0f; 
 		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 projectedLightSpaceMatrix = lightProjection * lightView;
 
@@ -737,7 +713,6 @@ int main() {
 
 			ProcessInput(window, *activeCamera, deltaTime);
 		}
-		// Handle Orbiting Camera
 		// Orbiting camera
 		if (current_camera == 2) {
 
@@ -756,7 +731,6 @@ int main() {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		
 	}
 
 	// Remove objects

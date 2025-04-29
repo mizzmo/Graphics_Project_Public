@@ -67,15 +67,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fragment_shader.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="vertex_shader.vert">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="ship_frag.frag">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="lighting_vertex.vert">
       <Filter>Source Files</Filter>
     </None>
