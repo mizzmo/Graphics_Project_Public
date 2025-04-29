@@ -76,9 +76,6 @@
     <None Include="ship_frag.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="grass_frag.frag">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="lighting_vertex.vert">
       <Filter>Source Files</Filter>
     </None>

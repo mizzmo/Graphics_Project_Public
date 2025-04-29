@@ -151,7 +151,6 @@
     <ClInclude Include="plane.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="grass_frag.frag" />
     <None Include="lighting_fragment.frag" />
     <None Include="lighting_vertex.vert" />
     <None Include="shadow.frag" />

@@ -21,6 +21,7 @@ struct SCamera
 
 	glm::vec3 WorldUp;
 
+
 	float Yaw;
 	float Pitch;
 
@@ -93,7 +94,50 @@ void MoveAndOrientCamera(SCamera& in, glm::vec3 target, float distance, float xo
 	// Use cross product with camera right vec and camera front vec
 	// Normalise to get direction from camera to pole
 	in.Up = glm::normalize(glm::cross(in.Right, in.Front));
+}
 
 
 
+// For first person camera
+void OrientFirstPersonCamera(SCamera& camera, float xoffset, float yoffset)
+{
+	// Adjust mouse sensitivity
+	xoffset *= camera.MouseSensitivity;
+	yoffset *= camera.MouseSensitivity;
+
+	// Update yaw and pitch
+	camera.Yaw += xoffset;
+	camera.Pitch += yoffset;
+
+	// Clamp the pitch to prevent flipping
+	if (camera.Pitch > 89.0f)
+		camera.Pitch = 89.0f;
+	if (camera.Pitch < -89.0f)
+		camera.Pitch = -89.0f;
+
+	// Calculate new front vector
+	glm::vec3 front;
+	front.x = cos(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
+	front.y = sin(glm::radians(camera.Pitch));
+	front.z = sin(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
+	camera.Front = glm::normalize(front);
+
+	// Recalculate right and up vectors
+	camera.Right = glm::normalize(glm::cross(camera.Front, camera.WorldUp));
+	camera.Up = glm::normalize(glm::cross(camera.Right, camera.Front));
+}
+
+void InitFirstPersonCamera(SCamera& camera, glm::vec3 startPosition = glm::vec3(0.0f, 0.0f, 3.0f))
+{
+	camera.Position = startPosition;
+	camera.Front = glm::vec3(0.0f, 0.0f, -1.0f);
+	camera.WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	// Z axis
+	camera.Yaw = -90.0f; 
+	camera.Pitch = 0.0f;
+	camera.MouseSensitivity = 0.1f;
+
+	// Calculate Right and Up vectors from initial Front
+	camera.Right = glm::normalize(glm::cross(camera.Front, camera.WorldUp));
+	camera.Up = glm::normalize(glm::cross(camera.Right, camera.Front));
 }

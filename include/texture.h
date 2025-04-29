@@ -5,6 +5,13 @@
 #include "stb_image.h"
 
 
+struct Texture {
+	unsigned int id;
+	std::string type;
+	std::string path;
+};
+
+
 GLuint setup_texture(const char* filename)
 {
 	// Enable textures
