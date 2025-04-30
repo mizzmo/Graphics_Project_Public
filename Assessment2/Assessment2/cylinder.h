@@ -207,6 +207,14 @@ std::vector<GLfloat> form_cylinder(int num_segments, float top_radius, float bot
             return bottomColor + t * (topColor - bottomColor);
         };
 
+        // ---- Opacity Gradient ----
+        auto calculateOpacity = [&](float z_pos) {
+            // Normalize z from [-half_height, half_height] to [0, 1]
+            float normalized_z = (z_pos + half_height) / (2.0f * half_height);
+            // Interpolate opacity from 0.1 (at z=0) to 0.5 (at z=1)
+            return 0.1f + normalized_z * (0.8f - 0.f);
+        };
+
 
         // Position
         vert_array.push_back(pos1_bottom.x);
@@ -218,7 +226,7 @@ std::vector<GLfloat> form_cylinder(int num_segments, float top_radius, float bot
         vert_array.push_back(color_bottom.r);
         vert_array.push_back(color_bottom.g);
         vert_array.push_back(color_bottom.b);
-        vert_array.push_back(opacity);
+        vert_array.push_back(calculateOpacity(pos1_bottom.z));
         // Texture coordinates
         vert_array.push_back(tex_side_u1);
         vert_array.push_back(0.0f);
@@ -237,7 +245,7 @@ std::vector<GLfloat> form_cylinder(int num_segments, float top_radius, float bot
         vert_array.push_back(color_top.r);
         vert_array.push_back(color_top.g);
         vert_array.push_back(color_top.b);
-        vert_array.push_back(opacity);
+        vert_array.push_back(calculateOpacity(pos1_top.z));
         // Texture coordinates
         vert_array.push_back(tex_side_u1);
         vert_array.push_back(1.0f);
@@ -257,7 +265,7 @@ std::vector<GLfloat> form_cylinder(int num_segments, float top_radius, float bot
         vert_array.push_back(color_bottom_right.r);
         vert_array.push_back(color_bottom_right.g);
         vert_array.push_back(color_bottom_right.b);
-        vert_array.push_back(opacity);
+        vert_array.push_back(calculateOpacity(pos2_bottom.z));
         // Texture coordinates
         vert_array.push_back(tex_side_u2);
         vert_array.push_back(0.0f);
@@ -276,7 +284,7 @@ std::vector<GLfloat> form_cylinder(int num_segments, float top_radius, float bot
         vert_array.push_back(color_top.r);
         vert_array.push_back(color_top.g);
         vert_array.push_back(color_top.b);
-        vert_array.push_back(opacity);
+        vert_array.push_back(calculateOpacity(pos1_top.z));
         // Texture coordinates
         vert_array.push_back(tex_side_u1);
         vert_array.push_back(1.0f);
@@ -294,7 +302,7 @@ std::vector<GLfloat> form_cylinder(int num_segments, float top_radius, float bot
         vert_array.push_back(color_bottom_right.r);
         vert_array.push_back(color_bottom_right.g);
         vert_array.push_back(color_bottom_right.b);
-        vert_array.push_back(opacity);
+        vert_array.push_back(calculateOpacity(pos2_bottom.z));
         // Texture coordinates
         vert_array.push_back(tex_side_u2);
         vert_array.push_back(0.0f);
@@ -314,7 +322,7 @@ std::vector<GLfloat> form_cylinder(int num_segments, float top_radius, float bot
         vert_array.push_back(color_top_right.r);
         vert_array.push_back(color_top_right.g);
         vert_array.push_back(color_top_right.b);
-        vert_array.push_back(opacity);
+        vert_array.push_back(calculateOpacity(pos2_top.z));
         // Texture coordinates
         vert_array.push_back(tex_side_u2);
         vert_array.push_back(1.0f);

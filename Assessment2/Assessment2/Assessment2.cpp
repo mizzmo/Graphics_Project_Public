@@ -414,7 +414,7 @@ void initialise_buffers() {
 	int num_cylinder_vertices = 0;
 	// Use 48 Faces
 	// Num Faces, Top Radius, Bottom Radius, Height, Opacity, Store num vertices
-	cylinder = form_cylinder(64, 0.3f, 1.8f, 4.f, 0.3f, num_cylinder_vertices);
+	cylinder = form_cylinder(64, 0.3f, 1.8f, 2.2f, 0.3f, num_cylinder_vertices);
 
 	glBindVertexArray(VAOs[4]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[4]);
@@ -496,7 +496,7 @@ void draw_ufo(unsigned int program) {
 	// Apply transformations to the UFO
 	glm::mat4 modelUFO = glm::mat4(1.0f);
 	modelUFO = glm::scale(modelUFO, glm::vec3(0.06f, 0.06f, 0.06f));
-	modelUFO = glm::translate(modelUFO, glm::vec3(0.f, 35.f, 0.f));
+	modelUFO = glm::translate(modelUFO, glm::vec3(0.f, 26.f, 0.f));
 	modelUFO = glm::rotate(modelUFO, (float)glfwGetTime() / 20, glm::vec3(0.f, 1.f, 0.f));
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelUFO));
 
@@ -546,9 +546,7 @@ void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm
 	// Draw the floor and cubes using the shadow shader
 	draw_pyramid(shadowShaderProgram);
 	draw_ufo(shadowShaderProgram);
-	draw_cylinder(shadowShaderProgram);
 	draw_flat_plane(shadowShaderProgram);
-
 
 	// Unbind the framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -603,8 +601,6 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	// --- Cylinder ---
 	// Deactivate textures
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), false);
-
-
 	draw_cylinder(renderShaderProgram);
 	// Re-activate textures
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);

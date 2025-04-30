@@ -162,9 +162,12 @@ float CalculateDirectionalIllumination(){
 
     float ambient = 0.1f; 
 
-    float shadow = shadowOnFragment(FragPosProjectedLightSpace);
+    float rawShadow = shadowOnFragment(FragPosProjectedLightSpace);
 
-    float phong = ambient + ((1.f - shadow) * (iDiff + iSpec));
+   float transparency = colour.a;
+
+    float shadow = rawShadow * transparency;
+    float phong = ambient + (1.0 - shadow) * (iDiff + iSpec);
 
     return phong;
 }
