@@ -1,3 +1,5 @@
+
+
 #include <iostream>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
@@ -12,12 +14,14 @@
 #include "plane.h"
 #include "object_parser.h"
 #include "shadow.h"
+#include "cylinder.h"
+
 
 // useful for picking colours
 // https://keiwando.com/color-picker/
 
-#define NUM_VBO 4
-#define NUM_VAO 4
+#define NUM_VBO 5
+#define NUM_VAO 5
 
 unsigned int width = 800;
 unsigned int height = 600;
@@ -57,6 +61,8 @@ glm::vec3 lightPos = glm::vec3(10.f, 9.f, -9.f);
 
 //std::vector<GLfloat> planeVertices;
 vector<GLfloat> ship_array;
+std::vector<GLfloat> cylinder;
+
 
 // Textures for UFO
 std::vector<GLuint> ufo_texture_ids;
@@ -316,6 +322,7 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos)
 	OrientFirstPersonCamera(*activeCamera, xoffset, yoffset);
 }
 
+
 void initialise_buffers() {
 	// Generate number of VAOs
 	glGenVertexArrays(NUM_VAO, VAOs);
@@ -406,6 +413,30 @@ void initialise_buffers() {
 	glEnableVertexAttribArray(3);
 
 
+	// ---- Cylinder ----
+	int num_cylinder_vertices = 0;
+	// Use 48 Faces
+	cylinder = form_cylinder(48, 0.5f, 1.f, num_cylinder_vertices);
+
+	glBindVertexArray(VAOs[4]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[4]);
+
+	glBufferData(GL_ARRAY_BUFFER, cylinder.size() * sizeof(GLfloat), cylinder.data(), GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// Colour attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// Texture attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	// Normal attribute
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+
+
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -443,6 +474,23 @@ void initialise_cameras() {
 	MoveAndOrientCamera(Fixed_Rotate_Camera, glm::vec3(0.f, 0.f, 0.f), cam_dist, -15.f, -20.f);
 }
 
+
+
+
+void draw_cylinder(int program) {
+	glBindVertexArray(VAOs[4]);
+
+	// Apply transformations
+	glm::mat4 modelCylinder = glm::mat4(1.0f);
+	modelCylinder = glm::scale(modelCylinder, glm::vec3(1.f, 1.f, 1.f));
+	modelCylinder = glm::translate(modelCylinder, glm::vec3(0.f, 5.f, 0.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelCylinder));
+
+	int num_object_vertices = cylinder.size() / 11;
+	// Draw cylinder
+	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
+}
+
 void draw_ufo(unsigned int program) {
 	// Bind the VAO
 	glBindVertexArray(VAOs[2]);
@@ -455,7 +503,7 @@ void draw_ufo(unsigned int program) {
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelUFO));
 
 
-	int num_object_vertices = ship_array.size() / 8;
+	int num_object_vertices = ship_array.size() / 11;
 	// Draw the UFO
 	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 
@@ -500,7 +548,9 @@ void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm
 	// Draw the floor and cubes using the shadow shader
 	draw_pyramid(shadowShaderProgram);
 	draw_ufo(shadowShaderProgram);
+	draw_cylinder(shadowShaderProgram);
 	draw_flat_plane(shadowShaderProgram);
+
 
 	// Unbind the framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -551,6 +601,9 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	glActiveTexture(GL_TEXTURE1);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 1);
 	draw_flat_plane(renderShaderProgram);
+
+	draw_cylinder(renderShaderProgram);
+
 
 	// ---- UFO ----
 	// Activate textures for UFO
@@ -611,6 +664,8 @@ int main() {
 	glfwSetCursorPosCallback(window, MouseCallback);
 	// Make cursor invisible
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	
 
 	// Init gl3w after making context.
 	if (gl3wInit()) {
@@ -688,6 +743,8 @@ int main() {
 		// Use the shader program
 		glUseProgram(lighting_program);
 
+		glEnable(GL_MULTISAMPLE);
+
 		// Create a Projected Light Space Matrix
 		// Adjust these parameters based on your scene size
 		float near_plane = 0.1f, far_plane = 20.0f;
@@ -725,7 +782,6 @@ int main() {
 			// Apply the translation 
 			MoveAndOrientCamera(Fixed_Rotate_Camera, orbit_center, orbit_radius, xoffset, yoffset);
 		}
-		
 
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);

@@ -65,6 +65,9 @@
     <ClInclude Include="object_parser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cylinder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lighting_vertex.vert">
