@@ -2,7 +2,7 @@
 
 layout (location = 0) out vec4 fColour;
 
-in vec3 colour;
+in vec4 colour;
 in vec3 nor;
 in vec3 FragPosWorldSpace;
 in vec4 FragPosProjectedLightSpace;
@@ -21,6 +21,7 @@ uniform vec3 camPos;
 // Texture 
 in vec2 texCoords;
 uniform sampler2D tex0;
+uniform bool uses_texture;
 
 // Advanced Texture
 uniform bool uses_specular;
@@ -178,14 +179,23 @@ void main()
     // Lighting Colour
     float phong = CalculateDirectionalIllumination();
 
-    // Texture colour
-    vec4 texColor = texture(tex0, texCoords);
+    // Check if the shape uses texture
+    if(uses_texture){
+        // Texture colour
+        vec4 texColor = texture(tex0, texCoords);
 
-    fColour = vec4(phong * texColor.rgb * lightColour, texColor.a);
+        fColour = vec4(phong * texColor.rgb * lightColour, texColor.a);
 
-    if(uses_glow == true){
-        vec4 glow = texture(glow_map, texCoords);
-        //Apply the glow map
-        fColour = clamp(texColor + glow * 0.1, 0.0, 1.0);
-   }
+        // Check if the shape uses glow map
+        if(uses_glow == true){
+            vec4 glow = texture(glow_map, texCoords);
+            //Apply the glow map
+            fColour = clamp(texColor + glow * 0.1, 0.0, 1.0);
+        }
+    }
+    else{
+        // Use object colour
+        fColour = vec4(phong * colour.rgb * lightColour, colour.a);
+    }
+    
 }

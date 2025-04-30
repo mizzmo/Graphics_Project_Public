@@ -322,7 +322,6 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos)
 	OrientFirstPersonCamera(*activeCamera, xoffset, yoffset);
 }
 
-
 void initialise_buffers() {
 	// Generate number of VAOs
 	glGenVertexArrays(NUM_VAO, VAOs);
@@ -395,8 +394,6 @@ void initialise_buffers() {
 	glBindVertexArray(VAOs[3]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[3]);
 
-
-
 	// Generate the vertices for the plane.
 	glBufferData(GL_ARRAY_BUFFER, sizeof(flat_square), flat_square, GL_STATIC_DRAW);
 	// Position Attribute for the plane
@@ -416,7 +413,8 @@ void initialise_buffers() {
 	// ---- Cylinder ----
 	int num_cylinder_vertices = 0;
 	// Use 48 Faces
-	cylinder = form_cylinder(48, 0.5f, 1.f, num_cylinder_vertices);
+	// Num Faces, Top Radius, Bottom Radius, Height, Opacity, Store num vertices
+	cylinder = form_cylinder(64, 0.3f, 1.8f, 4.f, 0.3f, num_cylinder_vertices);
 
 	glBindVertexArray(VAOs[4]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[4]);
@@ -424,16 +422,16 @@ void initialise_buffers() {
 	glBufferData(GL_ARRAY_BUFFER, cylinder.size() * sizeof(GLfloat), cylinder.data(), GL_STATIC_DRAW);
 
 	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	// Colour attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	// Colour attribute & Transparency using Alpha val
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	// Texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(7 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 	// Normal attribute
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(9 * sizeof(float)));
 	glEnableVertexAttribArray(3);
 
 
@@ -441,6 +439,7 @@ void initialise_buffers() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
+
 
 void initialise_cameras() {
 	InitCamera(Model_Viewer_Camera);
@@ -474,16 +473,15 @@ void initialise_cameras() {
 	MoveAndOrientCamera(Fixed_Rotate_Camera, glm::vec3(0.f, 0.f, 0.f), cam_dist, -15.f, -20.f);
 }
 
-
-
-
 void draw_cylinder(int program) {
 	glBindVertexArray(VAOs[4]);
 
 	// Apply transformations
 	glm::mat4 modelCylinder = glm::mat4(1.0f);
 	modelCylinder = glm::scale(modelCylinder, glm::vec3(1.f, 1.f, 1.f));
-	modelCylinder = glm::translate(modelCylinder, glm::vec3(0.f, 5.f, 0.f));
+	modelCylinder = glm::translate(modelCylinder, glm::vec3(0.f, 1.f, 0.f));
+	// Rotate in the Y to be upright
+	modelCylinder = glm::rotate(modelCylinder, glm::radians(-90.f), glm::vec3(1.f, 0.f, 0.f));
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelCylinder));
 
 	int num_object_vertices = cylinder.size() / 11;
@@ -497,8 +495,8 @@ void draw_ufo(unsigned int program) {
 
 	// Apply transformations to the UFO
 	glm::mat4 modelUFO = glm::mat4(1.0f);
-	modelUFO = glm::scale(modelUFO, glm::vec3(0.05f, 0.05f, 0.05f));
-	modelUFO = glm::translate(modelUFO, glm::vec3(0.f, 25.f, 0.f));
+	modelUFO = glm::scale(modelUFO, glm::vec3(0.06f, 0.06f, 0.06f));
+	modelUFO = glm::translate(modelUFO, glm::vec3(0.f, 35.f, 0.f));
 	modelUFO = glm::rotate(modelUFO, (float)glfwGetTime() / 20, glm::vec3(0.f, 1.f, 0.f));
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelUFO));
 
@@ -602,7 +600,14 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 1);
 	draw_flat_plane(renderShaderProgram);
 
+	// --- Cylinder ---
+	// Deactivate textures
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), false);
+
+
 	draw_cylinder(renderShaderProgram);
+	// Re-activate textures
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);
 
 
 	// ---- UFO ----
@@ -699,6 +704,12 @@ int main() {
 	ship_normal = setup_texture("objs/ufo/ufo_normal.png");
 	ship_specular = setup_texture("objs/ufo/ufo_spec.png");
 	ship_bump = setup_texture("objs/ufo/Map__7_Normal_Bump.tga");
+
+	// Enable blending for transparency
+	glEnable(GL_BLEND);
+	// Specify blend function 
+	// Final colour is combination of source fragment scaled by alpha and destination fragment scaled by 1 - alpha
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Texture Unit 0 is used for Shadow Mapping.
 

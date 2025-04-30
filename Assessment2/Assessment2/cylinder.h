@@ -4,24 +4,24 @@
 
 #define DEG2RAD(n)  ((n) * (M_PI / 180.0f))
 
-std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height, int& out_vertex_count) {
+std::vector<GLfloat> form_cylinder(int num_segments, float top_radius, float bottom_radius, float height, float opacity, int& out_vertex_count) {
     const float half_height = height / 2.0f;
     const float offset = 360.0f / num_segments;
 
     // 3 floats for position (x, y, z)
-    // 3 floats for color (r, g, b)
+    // 4 floats for color (r, g, b, a)
     // 2 floats for texture coordinates (u, v)
     // 3 floats for normal (nx, ny, nz)
-    // 11 floats per vertex
+    // 12 floats per vertex
 
     // Calculate correct number of vertices
     // 3 for top, 3 for bottom, 6 for sides
     const int vertices_per_segment = 12; 
     const int total_vertices = vertices_per_segment * num_segments;
 
-    // 11 floats per vertex (pos + color + tex + normal)
+    // 12 floats per vertex (pos + color + tex + normal)
     std::vector<GLfloat> vert_array;
-    vert_array.reserve(total_vertices * 11);
+    vert_array.reserve(total_vertices * 12);
 
     // Pre-calculate center points
     const float center_top_x = 0.0f;
@@ -38,10 +38,16 @@ std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height,
         float angle_rad2 = DEG2RAD(angle + offset);
 
         // Calculate points for current segment
-        float x1 = radius * cos(angle_rad1);
-        float y1 = radius * sin(angle_rad1);
-        float x2 = radius * cos(angle_rad2);
-        float y2 = radius * sin(angle_rad2);
+        float x1_top = top_radius * cos(angle_rad1);
+        float y1_top = top_radius * sin(angle_rad1);
+        float x2_top = top_radius * cos(angle_rad2);
+        float y2_top = top_radius * sin(angle_rad2);
+
+        float x1_bottom = bottom_radius * cos(angle_rad1);
+        float y1_bottom = bottom_radius * sin(angle_rad1);
+        float x2_bottom = bottom_radius * cos(angle_rad2);
+        float y2_bottom = bottom_radius * sin(angle_rad2);
+
 
         // Calculate normals for side vertices
         // Normals point outward from center
@@ -72,6 +78,7 @@ std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height,
         vert_array.push_back(0.7f);
         vert_array.push_back(0.7f);
         vert_array.push_back(1.0f);
+        vert_array.push_back(opacity);
         // Texture coordinates (center of circle)
         vert_array.push_back(0.5f);
         vert_array.push_back(0.5f);
@@ -82,13 +89,14 @@ std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height,
 
         // First edge point
         // Position
-        vert_array.push_back(x1);
-        vert_array.push_back(y1);
+        vert_array.push_back(x1_top);
+        vert_array.push_back(y1_top);
         vert_array.push_back(half_height);
         // Color (top face - light blue)
         vert_array.push_back(0.7f);
         vert_array.push_back(0.7f);
         vert_array.push_back(1.0f);
+        vert_array.push_back(opacity);
         // Texture coordinates
         vert_array.push_back(tex_u1);
         vert_array.push_back(tex_v1);
@@ -99,13 +107,14 @@ std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height,
 
         // Second edge point
         // Position
-        vert_array.push_back(x2);
-        vert_array.push_back(y2);
+        vert_array.push_back(x2_top);
+        vert_array.push_back(y2_top);
         vert_array.push_back(half_height);
         // Color (top face - light blue)
         vert_array.push_back(0.7f);
         vert_array.push_back(0.7f);
         vert_array.push_back(1.0f);
+        vert_array.push_back(opacity);
         // Texture coordinates
         vert_array.push_back(tex_u2);
         vert_array.push_back(tex_v2);
@@ -124,6 +133,7 @@ std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height,
         vert_array.push_back(0.3f);
         vert_array.push_back(0.3f);
         vert_array.push_back(0.7f);
+        vert_array.push_back(opacity);
         // Texture coordinates (center of circle)
         vert_array.push_back(0.5f);
         vert_array.push_back(0.5f);
@@ -132,15 +142,16 @@ std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height,
         vert_array.push_back(0.0f);
         vert_array.push_back(-1.0f);
 
-        // Second edge point (swapped for correct winding)
+        // Second edge point
         // Position
-        vert_array.push_back(x2);
-        vert_array.push_back(y2);
+        vert_array.push_back(x2_bottom);
+        vert_array.push_back(y2_bottom);
         vert_array.push_back(-half_height);
         // Color (bottom face - darker blue)
         vert_array.push_back(0.3f);
         vert_array.push_back(0.3f);
         vert_array.push_back(0.7f);
+        vert_array.push_back(opacity);
         // Texture coordinates
         vert_array.push_back(tex_u2);
         vert_array.push_back(tex_v2);
@@ -149,15 +160,16 @@ std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height,
         vert_array.push_back(0.0f);
         vert_array.push_back(-1.0f);
 
-        // First edge point (swapped for correct winding)
+        // First edge point
         // Position
-        vert_array.push_back(x1);
-        vert_array.push_back(y1);
+        vert_array.push_back(x1_bottom);
+        vert_array.push_back(y1_bottom);
         vert_array.push_back(-half_height);
         // Color (bottom face - darker blue)
         vert_array.push_back(0.3f);
         vert_array.push_back(0.3f);
         vert_array.push_back(0.7f);
+        vert_array.push_back(opacity);
         // Texture coordinates
         vert_array.push_back(tex_u1);
         vert_array.push_back(tex_v1);
@@ -168,108 +180,148 @@ std::vector<GLfloat> form_cylinder(int num_segments, float radius, float height,
 
         // --- Side quad (2 triangles) ---
         // First triangle
-        // Bottom-left vertex
+        // Define the four vertices of the quad
+        glm::vec3 pos1_bottom(x1_bottom, y1_bottom, -half_height);
+        glm::vec3 pos1_top(x1_top, y1_top, half_height);
+        glm::vec3 pos2_top(x2_top, y2_top, half_height);
+        glm::vec3 pos2_bottom(x2_bottom, y2_bottom, -half_height);
+
+        // Calculate two edge vectors that span the quad
+        glm::vec3 edge_vertical1 = pos1_top - pos1_bottom;
+        glm::vec3 edge_horizontal = pos2_bottom - pos1_bottom;
+        glm::vec3 edge_vertical2 = pos2_top - pos2_bottom;
+
+        // Calculate the normal using cross product
+        glm::vec3 normal = glm::normalize(glm::cross(edge_horizontal, edge_vertical1));
+
+        // ---- Colour Gradient ----
+        // Define start and end gradient colours
+        glm::vec3 bottomColor = glm::vec3(0.0f, 0.2f, 0.4f); 
+        glm::vec3 topColor = glm::vec3(0.4f, 0.8f, 0.6f);    
+
+        // Interpolate colour
+        // For each vertex, calculate a t value based on its z coordinate
+        // // Use t to linearly interpolate a new gradient colour between the set bounds
+		// Normalise to be between 0 and 1 and apply
+        auto interpolateColor = [&](float t) {
+            return bottomColor + t * (topColor - bottomColor);
+        };
+
+
         // Position
-        vert_array.push_back(x1);
-        vert_array.push_back(y1);
-        vert_array.push_back(-half_height);
-        // Color (side faces - gradient based on position)
-        vert_array.push_back(0.5f + nx1 * 0.5f);
-        vert_array.push_back(0.5f + ny1 * 0.5f);
-        vert_array.push_back(0.7f);
+        vert_array.push_back(pos1_bottom.x);
+        vert_array.push_back(pos1_bottom.y);
+        vert_array.push_back(pos1_bottom.z);
+        // Color 
+        float t_bottom = (pos1_bottom.z + half_height) / (2.0f * half_height);
+        glm::vec3 color_bottom = interpolateColor(t_bottom);
+        vert_array.push_back(color_bottom.r);
+        vert_array.push_back(color_bottom.g);
+        vert_array.push_back(color_bottom.b);
+        vert_array.push_back(opacity);
         // Texture coordinates
         vert_array.push_back(tex_side_u1);
         vert_array.push_back(0.0f);
-        // Normal (pointing outward)
-        vert_array.push_back(nx1);
-        vert_array.push_back(ny1);
-        vert_array.push_back(0.0f);
+        // Normal 
+        vert_array.push_back(normal.x);
+        vert_array.push_back(normal.y);
+        vert_array.push_back(normal.z);
 
-        // Top-left vertex
         // Position
-        vert_array.push_back(x1);
-        vert_array.push_back(y1);
-        vert_array.push_back(half_height);
-        // Color (side faces - gradient based on position)
-        vert_array.push_back(0.5f + nx1 * 0.5f);
-        vert_array.push_back(0.5f + ny1 * 0.5f);
-        vert_array.push_back(0.7f);
+        vert_array.push_back(pos1_top.x);
+        vert_array.push_back(pos1_top.y);
+        vert_array.push_back(pos1_top.z);
+        // Color
+        float t_top = (pos1_top.z + half_height) / (2.0f * half_height); 
+        glm::vec3 color_top = interpolateColor(t_top);
+        vert_array.push_back(color_top.r);
+        vert_array.push_back(color_top.g);
+        vert_array.push_back(color_top.b);
+        vert_array.push_back(opacity);
         // Texture coordinates
         vert_array.push_back(tex_side_u1);
         vert_array.push_back(1.0f);
         // Normal (pointing outward)
-        vert_array.push_back(nx1);
-        vert_array.push_back(ny1);
-        vert_array.push_back(0.0f);
-
-        // Top-right vertex
-        // Position
-        vert_array.push_back(x2);
-        vert_array.push_back(y2);
-        vert_array.push_back(half_height);
-        // Color (side faces - gradient based on position)
-        vert_array.push_back(0.5f + nx2 * 0.5f);
-        vert_array.push_back(0.5f + ny2 * 0.5f);
-        vert_array.push_back(0.7f);
-        // Texture coordinates
-        vert_array.push_back(tex_side_u2);
-        vert_array.push_back(1.0f);
-        // Normal (pointing outward)
-        vert_array.push_back(nx2);
-        vert_array.push_back(ny2);
-        vert_array.push_back(0.0f);
-
-        // Second triangle
-        // Bottom-left vertex
-        // Position
-        vert_array.push_back(x1);
-        vert_array.push_back(y1);
-        vert_array.push_back(-half_height);
-        // Color (side faces - gradient based on position)
-        vert_array.push_back(0.5f + nx1 * 0.5f);
-        vert_array.push_back(0.5f + ny1 * 0.5f);
-        vert_array.push_back(0.7f);
-        // Texture coordinates
-        vert_array.push_back(tex_side_u1);
-        vert_array.push_back(0.0f);
-        // Normal (pointing outward)
-        vert_array.push_back(nx1);
-        vert_array.push_back(ny1);
-        vert_array.push_back(0.0f);
-
-        // Top-right vertex
-        // Position
-        vert_array.push_back(x2);
-        vert_array.push_back(y2);
-        vert_array.push_back(half_height);
-        // Color (side faces - gradient based on position)
-        vert_array.push_back(0.5f + nx2 * 0.5f);
-        vert_array.push_back(0.5f + ny2 * 0.5f);
-        vert_array.push_back(0.7f);
-        // Texture coordinates
-        vert_array.push_back(tex_side_u2);
-        vert_array.push_back(1.0f);
-        // Normal (pointing outward)
-        vert_array.push_back(nx2);
-        vert_array.push_back(ny2);
-        vert_array.push_back(0.0f);
+        vert_array.push_back(normal.x);
+        vert_array.push_back(normal.y);
+        vert_array.push_back(normal.z);
 
         // Bottom-right vertex
         // Position
-        vert_array.push_back(x2);
-        vert_array.push_back(y2);
-        vert_array.push_back(-half_height);
-        // Color (side faces - gradient based on position)
-        vert_array.push_back(0.5f + nx2 * 0.5f);
-        vert_array.push_back(0.5f + ny2 * 0.5f);
-        vert_array.push_back(0.7f);
+        vert_array.push_back(pos2_bottom.x);
+        vert_array.push_back(pos2_bottom.y);
+        vert_array.push_back(pos2_bottom.z);
+        // Color 
+        float t_bottom_right = (pos2_bottom.z + half_height) / (2.0f * half_height); 
+        glm::vec3 color_bottom_right = interpolateColor(t_bottom_right);
+        vert_array.push_back(color_bottom_right.r);
+        vert_array.push_back(color_bottom_right.g);
+        vert_array.push_back(color_bottom_right.b);
+        vert_array.push_back(opacity);
         // Texture coordinates
         vert_array.push_back(tex_side_u2);
         vert_array.push_back(0.0f);
         // Normal (pointing outward)
-        vert_array.push_back(nx2);
-        vert_array.push_back(ny2);
+        vert_array.push_back(normal.x);
+        vert_array.push_back(normal.y);
+        vert_array.push_back(normal.z);
+
+        // Second triangle
+        // Top-left vertex 
+        // Position
+        vert_array.push_back(pos1_top.x);
+        vert_array.push_back(pos1_top.y);
+        vert_array.push_back(pos1_top.z);
+        // Color 
+        vert_array.push_back(color_top.r);
+        vert_array.push_back(color_top.g);
+        vert_array.push_back(color_top.b);
+        vert_array.push_back(opacity);
+        // Texture coordinates
+        vert_array.push_back(tex_side_u1);
+        vert_array.push_back(1.0f);
+        // Normal (pointing outward)
+        vert_array.push_back(normal.x);
+        vert_array.push_back(normal.y);
+        vert_array.push_back(normal.z);
+
+        // Bottom-right vertex 
+        // Position
+        vert_array.push_back(pos2_bottom.x);
+        vert_array.push_back(pos2_bottom.y);
+        vert_array.push_back(pos2_bottom.z);
+        // Color (side faces - gradient based on position)
+        vert_array.push_back(color_bottom_right.r);
+        vert_array.push_back(color_bottom_right.g);
+        vert_array.push_back(color_bottom_right.b);
+        vert_array.push_back(opacity);
+        // Texture coordinates
+        vert_array.push_back(tex_side_u2);
         vert_array.push_back(0.0f);
+        // Normal (pointing outward)
+        vert_array.push_back(normal.x);
+        vert_array.push_back(normal.y);
+        vert_array.push_back(normal.z);
+
+        // Top-right vertex 
+        // Position
+        vert_array.push_back(pos2_top.x);
+        vert_array.push_back(pos2_top.y);
+        vert_array.push_back(pos2_top.z);
+        // Color (side faces - gradient based on position)
+        float t_top_right = (pos2_top.z + half_height) / (2.0f * half_height); 
+        glm::vec3 color_top_right = interpolateColor(t_top_right);
+        vert_array.push_back(color_top_right.r);
+        vert_array.push_back(color_top_right.g);
+        vert_array.push_back(color_top_right.b);
+        vert_array.push_back(opacity);
+        // Texture coordinates
+        vert_array.push_back(tex_side_u2);
+        vert_array.push_back(1.0f);
+        // Normal (pointing outward)
+        vert_array.push_back(normal.x);
+        vert_array.push_back(normal.y);
+        vert_array.push_back(normal.z);
 
         angle += offset;
     }

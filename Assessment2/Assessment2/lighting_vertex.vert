@@ -1,11 +1,11 @@
 #version 450 core
 
 layout(location = 0) in vec4 vPos;
-layout(location = 1) in vec3 vColor;
+layout(location = 1) in vec4 vColor;
 layout (location = 2) in vec2 vTexture;
 layout(location = 3) in vec3 vNor;
 
-out vec3 colour;
+out vec4 colour;
 out vec2 texCoords;
 out vec3 nor;
 out vec3 FragPosWorldSpace;
