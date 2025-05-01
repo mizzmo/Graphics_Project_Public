@@ -20,8 +20,7 @@
 // useful for picking colours
 // https://keiwando.com/color-picker/
 
-#define NUM_VBO 5
-#define NUM_VAO 5
+
 
 unsigned int width = 800;
 unsigned int height = 600;
@@ -62,12 +61,14 @@ glm::vec3 lightPos = glm::vec3(10.f, 9.f, -9.f);
 //std::vector<GLfloat> planeVertices;
 vector<GLfloat> ship_array;
 std::vector<GLfloat> cylinder;
+vector<GLfloat> jet_array;
 
 
 // Textures for UFO
 std::vector<GLuint> ufo_texture_ids;
+std::vector<GLuint> jet_texture_ids;
 
-GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump;
+GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex;
 
 // Mouse Callback
 float lastX = 800.0f / 2.0f;
@@ -77,6 +78,9 @@ bool firstMouse = true;
 float deltaTime = 0.0f; 
 float lastFrame = 0.0f; 
 
+
+#define NUM_VBO 6
+#define NUM_VAO 6
 // Create a Vertex Array Object (VAO)
 // Stores pointers to VBOs and tells OpenGL how to interpret the data.
 // Need to make before VBO, can be used to switch between them
@@ -435,11 +439,52 @@ void initialise_buffers() {
 	glEnableVertexAttribArray(3);
 
 
+	
+
+	//  ---------- Jet Plane ----------
+	// Configure VAO 5 (Plane)
+	glBindVertexArray(VAOs[5]);
+	// Bind VBO 5 (for the Plane vertices)
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[5]);
+
+	// Create a texture map to store textures
+	std::map<std::string, GLuint> jet_textures;
+
+	// Load an Object with textures
+	std::vector<triangle> jet_triangles;
+	// Specify the base folder path
+	obj_path = "objs/jet/Rafale.obj";
+	base_path = "objs/jet";
+	num_triangles = obj_parse(obj_path.c_str(), &jet_triangles, base_path.c_str(), &jet_textures);
+
+	// Convert to array of floats
+	jet_array = tri_to_fl_array(jet_triangles);
+	// Upload the vertex data to the VBO
+	glBufferData(GL_ARRAY_BUFFER, jet_array.size() * sizeof(GLfloat), jet_array.data(), GL_STATIC_DRAW);
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// Colour attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// Texture attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	// Normal attribute
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+
+	// Store texture IDs for rendering
+	for (const auto& triangle : jet_triangles) {
+		if (triangle.texID > 0 && std::find(jet_texture_ids.begin(), jet_texture_ids.end(), triangle.texID) == jet_texture_ids.end()) {
+			jet_texture_ids.push_back(triangle.texID);
+		}
+	}
+
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
-
 
 void initialise_cameras() {
 	InitCamera(Model_Viewer_Camera);
@@ -495,9 +540,9 @@ void draw_ufo(unsigned int program) {
 
 	// Apply transformations to the UFO
 	glm::mat4 modelUFO = glm::mat4(1.0f);
-	modelUFO = glm::scale(modelUFO, glm::vec3(0.06f, 0.06f, 0.06f));
-	modelUFO = glm::translate(modelUFO, glm::vec3(0.f, 26.f, 0.f));
+	modelUFO = glm::translate(modelUFO, glm::vec3(0.f, 1.5f, 0.f));
 	modelUFO = glm::rotate(modelUFO, (float)glfwGetTime() / 20, glm::vec3(0.f, 1.f, 0.f));
+	modelUFO = glm::scale(modelUFO, glm::vec3(0.06f, 0.06f, 0.06f));
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelUFO));
 
 
@@ -527,6 +572,39 @@ void draw_pyramid(unsigned int program) {
 	glDrawArrays(GL_TRIANGLES, 0, num_vertices);
 }
 
+void draw_jet(unsigned int program) {
+	// Bind the VAO
+	glBindVertexArray(VAOs[5]);
+
+	// Use time as an angle for the circular motion.
+	float angle = glfwGetTime() / 2;
+	// Radius around the central point that the plane will travel
+	float radius = 45.0f;
+	// Position on the path of the circle
+	float x = radius * cos(angle);
+	float z = radius * sin(angle);
+	float y = 30.0f; 
+
+	// Apply transformations to the Jet
+	glm::mat4 modelJet = glm::mat4(1.0f);
+	modelJet = glm::scale(modelJet, glm::vec3(0.08f, 0.08f, 0.08f));
+	// Move to the side of the UFO, initial position
+	modelJet = glm::translate(modelJet, glm::vec3(x, y, z));
+	
+	// Rotate to be perpendicular to tangent of path.
+	modelJet = glm::rotate(modelJet, -angle, glm::vec3(0.f, 1.f, 0.f));
+	// Bank the plane towards the center of the target.
+	modelJet = glm::rotate(modelJet, glm::radians(25.0f), glm::vec3(0.f, 0.f, 1.f));
+
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelJet));
+
+
+	int num_object_vertices = jet_array.size() / 11;
+	// Draw the Plane
+	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
+}
+
+
 void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
 	// Set the viewport to the size of the shadow map
 	glViewport(0, 0, SH_MAP_WIDTH, SH_MAP_HEIGHT);
@@ -547,6 +625,7 @@ void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm
 	draw_pyramid(shadowShaderProgram);
 	draw_ufo(shadowShaderProgram);
 	draw_flat_plane(shadowShaderProgram);
+	draw_jet(shadowShaderProgram);
 
 	// Unbind the framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -606,6 +685,16 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);
 
 
+	// ---- Jet Plane ----
+	// Load texture
+	glActiveTexture(GL_TEXTURE9);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 9);
+
+	draw_jet(renderShaderProgram);
+
+
+
+
 	// ---- UFO ----
 	// Activate textures for UFO
 	// Texture Unit 3 - UFO Diffuse
@@ -635,6 +724,8 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "bump_scale"), 0.1f);
 
 	draw_ufo(renderShaderProgram);
+
+	
 
 }
 
@@ -695,27 +786,26 @@ int main() {
 	brick_tex = setup_texture("bricks.jpg");
 	// Sand using MipMaps
 	const char* sand_files[11] = {
-	"sand_mipmap/sand_1024x1024.bmp",
-	"sand_mipmap/sand_512x512.bmp",
-	"sand_mipmap/sand_256x256.bmp",
-	"sand_mipmap/sand_128x128.bmp",
-	"sand_mipmap/sand_64x64.bmp",
-	"sand_mipmap/sand_32x32.bmp",
-	"sand_mipmap/sand_16x16.bmp",
-	"sand_mipmap/sand_8x8.bmp",
-	"sand_mipmap/sand_4x4.bmp",
-	"sand_mipmap/sand_2x2.bmp",
-	"sand_mipmap/sand_1x1.bmp"
+		"sand_mipmap/sand_1024x1024.bmp",
+		"sand_mipmap/sand_512x512.bmp",
+		"sand_mipmap/sand_256x256.bmp",
+		"sand_mipmap/sand_128x128.bmp",
+		"sand_mipmap/sand_64x64.bmp",
+		"sand_mipmap/sand_32x32.bmp",
+		"sand_mipmap/sand_16x16.bmp",
+		"sand_mipmap/sand_8x8.bmp",
+		"sand_mipmap/sand_4x4.bmp",
+		"sand_mipmap/sand_2x2.bmp",
+		"sand_mipmap/sand_1x1.bmp"
 	};
 	sand_tex = setup_mipmaps(sand_files, 11);
-	//sand_tex = setup_texture("sand.bmp");
 	// Texture for the UFO object.
 	ship_tex = setup_texture("objs/ufo/ufo_diffuse.png");
 	ship_glow = setup_texture("objs/ufo/ufo_diffuse_glow.png");
 	ship_normal = setup_texture("objs/ufo/ufo_normal.png");
 	ship_specular = setup_texture("objs/ufo/ufo_spec.png");
 	ship_bump = setup_texture("objs/ufo/Map__7_Normal_Bump.tga");
-
+	jet_tex = setup_texture("objs/jet/Paint_tex.jpg");
 	// Enable blending for transparency
 	glEnable(GL_BLEND);
 	// Specify blend function 
@@ -754,6 +844,9 @@ int main() {
 	glActiveTexture(GL_TEXTURE8);
 	glBindTexture(GL_TEXTURE_2D, sand_tex);
 
+	// Texture unit 9 - Jet Texture
+	glActiveTexture(GL_TEXTURE9);
+	glBindTexture(GL_TEXTURE_2D, jet_tex);
 
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);
