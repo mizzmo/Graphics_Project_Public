@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Resource Files\Textures">
-      <UniqueIdentifier>{1c789ba7-f081-4377-a62d-25105e44ceaa}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assessment2.cpp">
@@ -82,29 +79,6 @@
     <None Include="shadow.frag">
       <Filter>Source Files</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="grid.bmp">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="jubilee.bmp">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="car.jpg">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="Grass_Block.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="bricks.jpg">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="grass.jpg">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="objs\simple_ufo\source\UFO\TexturesCom_MetalAircraft0050_1_S lrg.jpg">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="shape_vectors.txt">

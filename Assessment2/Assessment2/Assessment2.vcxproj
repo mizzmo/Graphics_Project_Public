@@ -158,15 +158,6 @@
     <None Include="shadow.vert" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="bricks.jpg" />
-    <Image Include="car.jpg" />
-    <Image Include="grass.jpg" />
-    <Image Include="Grass_Block.png" />
-    <Image Include="grid.bmp" />
-    <Image Include="jubilee.bmp" />
-    <Image Include="objs\simple_ufo\source\UFO\TexturesCom_MetalAircraft0050_1_S lrg.jpg" />
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="shape_vectors.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

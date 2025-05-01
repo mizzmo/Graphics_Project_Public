@@ -593,9 +593,9 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	draw_pyramid(renderShaderProgram);
 
 	// ---- Flat Plane ----
-	// Activate sand texture in texture unit 1
-	glActiveTexture(GL_TEXTURE1);
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 1);
+	// Activate sand texture in texture unit 8
+	glActiveTexture(GL_TEXTURE8);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 8);
 	draw_flat_plane(renderShaderProgram);
 
 	// --- Cylinder ---
@@ -693,7 +693,22 @@ int main() {
 
 	// Texture to load.
 	brick_tex = setup_texture("bricks.jpg");
-	sand_tex = setup_texture("sand.jpg");
+	// Sand using MipMaps
+	const char* sand_files[11] = {
+	"sand_mipmap/sand_1024x1024.bmp",
+	"sand_mipmap/sand_512x512.bmp",
+	"sand_mipmap/sand_256x256.bmp",
+	"sand_mipmap/sand_128x128.bmp",
+	"sand_mipmap/sand_64x64.bmp",
+	"sand_mipmap/sand_32x32.bmp",
+	"sand_mipmap/sand_16x16.bmp",
+	"sand_mipmap/sand_8x8.bmp",
+	"sand_mipmap/sand_4x4.bmp",
+	"sand_mipmap/sand_2x2.bmp",
+	"sand_mipmap/sand_1x1.bmp"
+	};
+	sand_tex = setup_mipmaps(sand_files, 11);
+	//sand_tex = setup_texture("sand.bmp");
 	// Texture for the UFO object.
 	ship_tex = setup_texture("objs/ufo/ufo_diffuse.png");
 	ship_glow = setup_texture("objs/ufo/ufo_diffuse_glow.png");
@@ -708,12 +723,9 @@ int main() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Texture Unit 0 is used for Shadow Mapping.
+	// Texture Unit 1 is used by the Texture class.
 
 	// Bind to texture units
-	// Texture unit 1 - Sand
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, sand_tex);
-
 	// Texture unit 2 - Bricks
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, brick_tex);
@@ -737,6 +749,10 @@ int main() {
 	// Texture unit 7 - UFO Bump
 	glActiveTexture(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_2D, ship_bump);
+
+	// Texture unit 8 - Sand
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, sand_tex);
 
 
 	// Account for depth of 3D objects.

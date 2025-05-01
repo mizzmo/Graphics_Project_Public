@@ -60,7 +60,7 @@ GLuint setup_texture(const char* filename)
 	else {
 		std::cerr << "Failed to load texture: " << filename << std::endl;
 	}
-
+	glGenerateMipmap(GL_TEXTURE_2D);
 	
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
@@ -90,10 +90,11 @@ GLuint setup_mipmaps(const char* filename[], int n)
 	for (int c = 0; c < n; c++) {
 		pxls[c] = stbi_load(filename[c], &w[c], &h[c], &chan[c], 0);
 		if (pxls[c]) {
-			glTexImage2D(GL_TEXTURE_2D, c, GL_RGB, w[c], h[c], 0, GL_RGB, GL_UNSIGNED_BYTE, pxls[c]);
+			GLenum format = (chan[c] == 4) ? GL_RGBA : GL_RGB;
+			glTexImage2D(GL_TEXTURE_2D, c, format, w[c], h[c], 0, format, GL_UNSIGNED_BYTE, pxls[c]);
 		}
-		glGenerateMipmap(GL_TEXTURE_2D);
-		delete pxls[c];
+		
+		stbi_image_free(pxls[c]);
 	}
 	
 	// Check pxls colour data ia loaded correctly
