@@ -59,9 +59,10 @@ glm::vec3 lightPos = glm::vec3(10.f, 9.f, -9.f);
 
 
 //std::vector<GLfloat> planeVertices;
-vector<GLfloat> ship_array;
+std::vector<GLfloat> ship_array;
 std::vector<GLfloat> cylinder;
-vector<GLfloat> jet_array;
+std::vector<GLfloat> jet_array;
+std::vector<GLfloat> desert_dunes;
 
 
 // Textures for UFO
@@ -398,8 +399,10 @@ void initialise_buffers() {
 	glBindVertexArray(VAOs[3]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[3]);
 
+	// Number of Squares, Width of each square
+	desert_dunes = generate_plane(64, 30.f, glm::vec3(1.f, 0.f, 0.f));
 	// Generate the vertices for the plane.
-	glBufferData(GL_ARRAY_BUFFER, sizeof(flat_square), flat_square, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, desert_dunes.size() * sizeof(GLfloat), desert_dunes.data(), GL_STATIC_DRAW);
 	// Position Attribute for the plane
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -414,7 +417,7 @@ void initialise_buffers() {
 	glEnableVertexAttribArray(3);
 
 
-	// ---- Cylinder ----
+	// ---- CYLINDER ----
 	int num_cylinder_vertices = 0;
 	// Use 48 Faces
 	// Num Faces, Top Radius, Bottom Radius, Height, Opacity, Store num vertices
@@ -441,7 +444,7 @@ void initialise_buffers() {
 
 	
 
-	//  ---------- Jet Plane ----------
+	//  ---------- JET PLANE ----------
 	// Configure VAO 5 (Plane)
 	glBindVertexArray(VAOs[5]);
 	// Bind VBO 5 (for the Plane vertices)
@@ -552,14 +555,14 @@ void draw_ufo(unsigned int program) {
 
 }
 
-void draw_flat_plane(unsigned int program) {
+void draw_dunes(unsigned int program) {
 	// Flat Plane
 	glBindVertexArray(VAOs[3]);
 	glm::mat4 modelFlatPlane = glm::mat4(1.0f);
-	modelFlatPlane = glm::translate(modelFlatPlane, glm::vec3(0.f, 0.f, 0.f));
-	modelFlatPlane = glm::scale(modelFlatPlane, glm::vec3(15.f, 15.f, 15.f));
+	// Move right and forwards and down 
+	modelFlatPlane = glm::translate(modelFlatPlane, glm::vec3(6.f, -0.1f, 1.f));
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelFlatPlane));
-	glDrawArrays(GL_TRIANGLES, 0, sizeof(flat_square) / (11 * sizeof(float)));
+	glDrawArrays(GL_TRIANGLES, 0, desert_dunes.size() / 11);
 }
 
 void draw_pyramid(unsigned int program) {
@@ -624,7 +627,7 @@ void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm
 	// Draw the floor and cubes using the shadow shader
 	draw_pyramid(shadowShaderProgram);
 	draw_ufo(shadowShaderProgram);
-	draw_flat_plane(shadowShaderProgram);
+	draw_dunes(shadowShaderProgram);
 	draw_jet(shadowShaderProgram);
 
 	// Unbind the framebuffer
@@ -675,7 +678,7 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	// Activate sand texture in texture unit 8
 	glActiveTexture(GL_TEXTURE8);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 8);
-	draw_flat_plane(renderShaderProgram);
+	draw_dunes(renderShaderProgram);
 
 	// --- Cylinder ---
 	// Deactivate textures
@@ -691,8 +694,6 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 9);
 
 	draw_jet(renderShaderProgram);
-
-
 
 
 	// ---- UFO ----
