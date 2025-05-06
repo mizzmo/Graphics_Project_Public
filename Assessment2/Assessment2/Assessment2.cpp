@@ -51,8 +51,14 @@ float orbit_speed = 0.00005f;
 // Center of the orbit
 glm::vec3 orbit_center(0.0f, 0.0f, 0.0f);
 
+// Directional Light
 glm::vec3 lightDirection = glm::vec3(-0.6f, -0.5f, 0.6f);
 glm::vec3 lightPos = glm::vec3(10.f, 9.f, -9.f);
+
+// Spot light
+#define NUM_SPOTLIGHTS 4
+glm::vec3 spotLightDirections[NUM_SPOTLIGHTS];
+glm::vec3 spotLightPos = glm::vec3(0.f, 1.f, 0.f);
 
 // Shadows
 #define SH_MAP_WIDTH 2048
@@ -71,7 +77,7 @@ std::vector<GLuint> ufo_texture_ids;
 // Textures for Jet
 std::vector<GLuint> jet_texture_ids;
 
-GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex;
+GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex;
 
 // Mouse Callback
 float lastX = 800.0f / 2.0f;
@@ -82,8 +88,8 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f; 
 
 
-#define NUM_VBO 7
-#define NUM_VAO 7
+#define NUM_VBO 8
+#define NUM_VAO 8
 // Create a Vertex Array Object (VAO)
 // Stores pointers to VBOs and tells OpenGL how to interpret the data.
 // Need to make before VBO, can be used to switch between them
@@ -92,7 +98,7 @@ GLuint VAOs[NUM_VAO];
 GLuint VBOs[NUM_VBO];
 
 // Create an array of floats representing coordinates of a triangle.
-GLfloat vertices[] = {
+GLfloat double_pyramid_vertices[] = {
 	// Coordinates, Colours, Texture, Normal
 	-1.0f, 0.0f, -1.0f,  	1.f, 1.0f, 1.0f,		0.0f, 0.0f,		-1.f, 1.f, 0.f,		//v1
 	-1.0f, 0.0f, 1.0f,      1.f, 1.0f, 1.0f,		1.0f, 0.0f,		-1.f, 1.f, 0.f,		//v2
@@ -139,6 +145,50 @@ GLfloat vertices[] = {
 	-1.0f, 0.0f, 1.0f,  	1.f, 1.0f, 1.0f,		0.0f, 0.0f,		0.f, -1.f, 1.f,		//v1
 	1.0f, 0.0f, 1.0f,       1.f, 1.0f, 1.0f,		1.0f, 0.0f,		0.f, -1.f, 1.f,		//v2
 	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f,		0.0f, 1.0f,		0.f, -1.f, 1.f,		//v3
+};
+
+GLfloat cube_vertices[] = {
+	-1.0f,  1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	-1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f
 };
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -327,7 +377,7 @@ void initialise_buffers() {
 	// Bind VBO 0 (for the triangle vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
 	// Store vertices in VBO
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(double_pyramid_vertices), double_pyramid_vertices, GL_STATIC_DRAW);
 	// Position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -473,7 +523,7 @@ void initialise_buffers() {
 	}
 
 
-	// ---- SHOOTING STAR ----
+	// ---- SHOOTING STARS ----
 	// Configure VAO 6
 	glBindVertexArray(VAOs[6]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[6]);
@@ -507,6 +557,15 @@ void initialise_buffers() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	// ---- SKYBOX ----
+	glBindVertexArray(VAOs[7]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[7]);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices) * sizeof(GLfloat), cube_vertices, GL_STATIC_DRAW);
+
+	// Position attribute (Dobules as texture coordinates for cube map)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -568,7 +627,7 @@ void update_shooting_star_path() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void draw_star(int program) {
+void draw_star(unsigned int program) {
     glUseProgram(program);
 
 	glm::mat4 view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
@@ -610,7 +669,7 @@ void draw_star(int program) {
 	}
 }
 
-void draw_cylinder(int program) {
+void draw_cylinder(unsigned int program) {
 	glBindVertexArray(VAOs[4]);
 
 	// Apply transformations
@@ -660,7 +719,7 @@ void draw_pyramid(unsigned int program) {
 	glm::mat4 modelTriangle = glm::mat4(1.0f);
 	modelTriangle = glm::scale(modelTriangle, glm::vec3(1.f, 1.f, 1.f));
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
-	int num_vertices = sizeof(vertices) / (11 * sizeof(float));
+	int num_vertices = sizeof(double_pyramid_vertices) / (11 * sizeof(float));
 	glDrawArrays(GL_TRIANGLES, 0, num_vertices);
 }
 
@@ -694,6 +753,46 @@ void draw_jet(unsigned int program) {
 	int num_object_vertices = jet_array.size() / 11;
 	// Draw the Plane
 	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
+}
+
+void draw_skybox(unsigned int program) {
+	glUseProgram(program);
+
+	// Save current depth function state
+	GLint oldDepthFunc;
+	glGetIntegerv(GL_DEPTH_FUNC, &oldDepthFunc);
+
+	// Change depth function so depth test passes
+	glDepthFunc(GL_LEQUAL);
+	// Dont write to depth buffer
+	glDepthMask(GL_FALSE);
+
+	// Activate texture unit and bind texture
+	glActiveTexture(GL_TEXTURE10);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
+
+	// Set the uniform to 10
+	glUniform1i(glGetUniformLocation(program, "skybox"), 10);
+
+	// Bind skybox VAO
+	glBindVertexArray(VAOs[7]);
+
+	// Set view and projection matrices
+	glm::mat4 view = glm::mat4(glm::mat3(GetViewMatrix(*activeCamera)));
+	glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glm::mat4 projection = glm::perspective(glm::radians(45.f), (float)width / (float)height, .01f, 100.f);
+	glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+	// Draw the cube
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	// Restore original state
+	glDepthMask(GL_TRUE);
+	glDepthFunc(oldDepthFunc);
+
+	// Unbind
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
@@ -747,10 +846,30 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 
 
 	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "projectedLightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(projectedLightSpaceMatrix));
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "camPos"), activeCamera->Position.x, activeCamera->Position.y, activeCamera->Position.z);
+	// Directional Lighting
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightColour"), 1.f, 0.98f, 0.7f);
-	glUniform3f(glGetUniformLocation(renderShaderProgram, "camPos"), activeCamera->Position.x, activeCamera->Position.y, activeCamera->Position.z);
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+	// Spot lighting
+
+	float t = glfwGetTime(); 
+	// Rotate each spolight with the UFO
+	for (int i = 0; i < NUM_SPOTLIGHTS; ++i) {
+		// Space around 360 degrees / 2pi
+		float angle = t / 20.0f + i * glm::two_pi<float>() / NUM_SPOTLIGHTS;  
+		glm::vec3 dir = glm::normalize(glm::vec3(cos(-angle), -0.6f, sin(-angle)));  
+		spotLightDirections[i] = dir;
+	}
+
+	// Upload spotlight directions
+	glUniform3fv(glGetUniformLocation(renderShaderProgram, "spotLightDirections"), NUM_SPOTLIGHTS, glm::value_ptr(spotLightDirections[0]));
+	
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "spotLightPos"), spotLightPos.x, spotLightPos.y, spotLightPos.z);
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "spotLightColour"), 0.f, 1.f, 0.f);
+
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "spotLightInnerCutoff"), 45.f);
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "spotLightOuterCutoff"), 45.f);
 
 	glm::mat4 view = glm::mat4(1.f);
 	view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
@@ -865,6 +984,7 @@ int main() {
 	GLuint lighting_program = CompileShader("lighting_vertex.vert", "lighting_fragment.frag");
 	GLuint shadow_shader = CompileShader("shadow.vert", "shadow.frag");
 	GLuint star_shader = CompileShader("star.vert", "star.frag");
+	GLuint skybox_shader = CompileShader("skybox.vert", "skybox.frag");
 	
 	// Initialise the cameras
 	initialise_cameras();
@@ -872,8 +992,7 @@ int main() {
 	// Create VAO and VBOs
 	initialise_buffers();
 
-	// Texture to load.
-	brick_tex = setup_texture("bricks.jpg");
+	
 	// Sand using MipMaps
 	const char* sand_files[11] = {
 		"sand_mipmap/sand_1024x1024.bmp",
@@ -888,8 +1007,22 @@ int main() {
 		"sand_mipmap/sand_2x2.bmp",
 		"sand_mipmap/sand_1x1.bmp"
 	};
+	// Faces for each side of the cubemap
+	vector<std::string> faces
+	{
+		"skybox/right.png",
+		"skybox/left.png",
+		"skybox/bottom.png",
+		"skybox/top.png",
+		"skybox/front.png",
+		"skybox/back.png"
+	};
+	// Set up the cubemap texture
+	skybox_tex = setup_cubemap(faces);
+
 	sand_tex = setup_mipmaps(sand_files, 11);
-	// Texture for the UFO object.
+	// Texture to load.
+	brick_tex = setup_texture("bricks.jpg");
 	ship_tex = setup_texture("objs/ufo/ufo_diffuse.png");
 	ship_glow = setup_texture("objs/ufo/ufo_diffuse_glow.png");
 	ship_normal = setup_texture("objs/ufo/ufo_normal.png");
@@ -938,6 +1071,10 @@ int main() {
 	glActiveTexture(GL_TEXTURE9);
 	glBindTexture(GL_TEXTURE_2D, jet_tex);
 
+	//Texture unit 10 - Cubemap
+	glActiveTexture(GL_TEXTURE10);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
+
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);
 
@@ -962,12 +1099,15 @@ int main() {
 		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 projectedLightSpaceMatrix = lightProjection * lightView;
 
+		draw_skybox(skybox_shader);
 
 		generateDepthMap(shadow_shader, shadow, projectedLightSpaceMatrix);
 		// Render the pyramid with a shadow map
 		renderWithShadow(lighting_program, shadow, projectedLightSpaceMatrix);
 
 		draw_star(star_shader);
+
+		
 
 		// First person camera
 		if (current_camera == 1) {
@@ -990,6 +1130,8 @@ int main() {
 			// Apply the translation 
 			MoveAndOrientCamera(Fixed_Rotate_Camera, orbit_center, orbit_radius, xoffset, yoffset);
 		}
+
+		
 
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);

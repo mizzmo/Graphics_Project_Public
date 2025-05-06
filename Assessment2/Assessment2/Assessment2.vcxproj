@@ -156,6 +156,8 @@
     <None Include="lighting_vertex.vert" />
     <None Include="shadow.frag" />
     <None Include="shadow.vert" />
+    <None Include="skybox.frag" />
+    <None Include="skybox.vert" />
     <None Include="star.frag" />
     <None Include="star.vert" />
   </ItemGroup>

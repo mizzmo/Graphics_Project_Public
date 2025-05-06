@@ -18,6 +18,15 @@ uniform vec3 lightColour;
 uniform vec3 lightPos;
 uniform vec3 camPos;
 
+// Spot Lighting
+#define NUM_SPOTS 4
+
+uniform vec3 spotLightDirections[NUM_SPOTS];
+uniform vec3 spotLightColour;
+uniform vec3 spotLightPos;
+uniform float spotLightInnerCutoff; 
+uniform float spotLightOuterCutoff; 
+
 // Texture 
 in vec2 texCoords;
 uniform sampler2D tex0;
@@ -63,7 +72,7 @@ vec3 calculateNormalFromMap() {
 
 float calculateSpecular(vec3 normal, vec3 viewDir, vec3 lightDir) {
     vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 128.0);
     
     if (uses_specular) {
         // Sample from specular map
@@ -172,33 +181,90 @@ float CalculateDirectionalIllumination(){
     return phong;
 }
 
+float CalculateSpotIllumination() {
+    vec3 Nnor = normalize(nor);
+    if (uses_normal) {
+        Nnor = calculateNormalFromMap();
+    } else if (bump_scale > 0.0) { 
+        Nnor = calculateNormalFromBumpMap();
+    }
+
+    float totalLight = 0.0;
+
+    for (int i = 0; i < NUM_SPOTS; ++i) {
+        vec3 lightDir = normalize(spotLightPos - FragPosWorldSpace);
+        vec3 spotDir = normalize(-spotLightDirections[i]);
+        float cosTheta = dot(spotDir, lightDir);
+
+        float innerCutoff = cos(radians(12.5));
+        float outerCutoff = cos(radians(17.5));
+
+        // Compute spotlight intensity
+        float intensity = 0.0;
+        if (cosTheta > outerCutoff) {
+            if (cosTheta < innerCutoff) {
+                intensity = smoothstep(outerCutoff, innerCutoff, cosTheta);
+            } else {
+                intensity = 1.0;
+            }
+
+            float iDiff = max(dot(Nnor, lightDir), 0.0);
+            vec3 viewDir = normalize(camPos - FragPosWorldSpace);
+            vec3 reflectDir = reflect(-lightDir, Nnor);
+            float iSpec = pow(max(dot(viewDir, reflectDir), 0.0), 128.0);
+
+            float distance = length(spotLightPos - FragPosWorldSpace);
+            float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+
+            float ambient = 0.1;
+            float diffuse = iDiff * intensity;
+            float specular = iSpec * intensity;
+
+            totalLight += ambient + (diffuse + specular) * attenuation;
+        }
+    }
+
+    return totalLight;
+}
 
 
 
 void main()
 {
+    // Calculate light contributions
+    float dirPhong = CalculateDirectionalIllumination();
+    float spotPhong = CalculateSpotIllumination(); 
 
-
-    // Lighting Colour
-    float phong = CalculateDirectionalIllumination();
-
-    // Check if the shape uses texture
-    if(uses_texture){
-        // Texture colour
+    // Standard color calculation
+    if (uses_texture) {
         vec4 texColor = texture(tex0, texCoords);
-
-        fColour = vec4(phong * texColor.rgb * lightColour, texColor.a);
-
-        // Check if the shape uses glow map
-        if(uses_glow == true){
+        
+        // Calculate the directional light color
+        vec3 dirLightColor = dirPhong * lightColour;
+        
+        // Calculate the spotlight color 
+        vec3 spotLightContrib = spotPhong * spotLightColour;
+        
+        // Combine both light sources
+        vec3 finalLightColor = dirLightColor + spotLightContrib;
+        
+        // Apply lighting to texture color
+        fColour = vec4(finalLightColor * texColor.rgb, texColor.a);
+        
+        // Handle glow if needed
+        if (uses_glow) {
             vec4 glow = texture(glow_map, texCoords);
-            //Apply the glow map
-            fColour = clamp(texColor + glow * 0.1, 0.0, 1.0);
+            fColour = clamp(fColour + glow * 0.1, 0.0, 1.0);
         }
+    } else {
+        // For untextured objects
+        vec3 dirLightColor = dirPhong * lightColour;
+        vec3 spotLightContrib = spotPhong * spotLightColour;
+        
+        // Combine both light sources
+        vec3 finalLightColor = dirLightColor + spotLightContrib;
+        
+        // Apply to vertex color
+        fColour = vec4(finalLightColor * colour.rgb, colour.a);
     }
-    else{
-        // Use object colour
-        fColour = vec4(phong * colour.rgb * lightColour, colour.a);
-    }
-    
 }

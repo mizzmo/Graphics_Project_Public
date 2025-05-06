@@ -85,6 +85,12 @@
     <None Include="star.frag">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="skybox.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="skybox.frag">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="shape_vectors.txt">

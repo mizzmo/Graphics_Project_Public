@@ -143,3 +143,8 @@ void InitFirstPersonCamera(SCamera& camera, glm::vec3 startPosition = glm::vec3(
 	camera.Right = glm::normalize(glm::cross(camera.Front, camera.WorldUp));
 	camera.Up = glm::normalize(glm::cross(camera.Right, camera.Front));
 }
+
+glm::mat4 GetViewMatrix(const SCamera& camera)
+{
+	return glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
+}
