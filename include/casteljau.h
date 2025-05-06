@@ -44,27 +44,23 @@ std::vector<point> EvaluateBezierCurve(std::vector<point>ctrl_points, int num_ev
 	return curve;
 }
 
-float* MakeFloatsFromVector(std::vector<point> curve, int &num_verts, int &num_floats, float r, float g, float b)
+std::vector<GLfloat> MakeFloatsFromVector(const std::vector<point>& points, float r, float g, float b) 
 {
-    num_verts = curve.size();
-    if (num_verts == 0) {
-        return NULL;
-    }
-    num_floats = num_verts * 6;
+    std::vector<GLfloat> vertices;
+    // Reserve space for efficiency (6 floats per point)
+    vertices.reserve(points.size() * 6);
 
-    float* attrib = (float*)malloc(num_floats*sizeof(float));
-    int offset = 0;
-
-    for (point p : curve) {
-        attrib[offset + 0] = p.x;
-        attrib[offset + 1] = p.y;
-        attrib[offset + 2] = p.z;
-        attrib[offset + 3] = r;
-        attrib[offset + 4] = g;
-        attrib[offset + 5] = b;
-        offset += 6;
+    for (const auto& p : points) {
+        // Position (x, y, z)
+        vertices.push_back(p.x);
+        vertices.push_back(p.y);
+        vertices.push_back(p.z);
+        // Color (r, g, b)
+        vertices.push_back(r);
+        vertices.push_back(g);
+        vertices.push_back(b);
     }
 
-	return attrib;
+    return vertices;
 }
 

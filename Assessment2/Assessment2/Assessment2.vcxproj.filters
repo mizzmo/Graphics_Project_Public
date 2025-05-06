@@ -79,6 +79,12 @@
     <None Include="shadow.frag">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="star.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="star.frag">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="shape_vectors.txt">

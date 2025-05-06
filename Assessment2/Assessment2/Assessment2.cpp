@@ -15,6 +15,7 @@
 #include "object_parser.h"
 #include "shadow.h"
 #include "cylinder.h"
+#include "casteljau.h"
 
 
 // useful for picking colours
@@ -63,10 +64,11 @@ std::vector<GLfloat> ship_array;
 std::vector<GLfloat> cylinder;
 std::vector<GLfloat> jet_array;
 std::vector<GLfloat> desert_dunes;
-
+std::vector<GLfloat> shooting_star;
 
 // Textures for UFO
 std::vector<GLuint> ufo_texture_ids;
+// Textures for Jet
 std::vector<GLuint> jet_texture_ids;
 
 GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex;
@@ -80,8 +82,8 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f; 
 
 
-#define NUM_VBO 6
-#define NUM_VAO 6
+#define NUM_VBO 7
+#define NUM_VAO 7
 // Create a Vertex Array Object (VAO)
 // Stores pointers to VBOs and tells OpenGL how to interpret the data.
 // Need to make before VBO, can be used to switch between them
@@ -138,20 +140,6 @@ GLfloat vertices[] = {
 	1.0f, 0.0f, 1.0f,       1.f, 1.0f, 1.0f,		1.0f, 0.0f,		0.f, -1.f, 1.f,		//v2
 	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f,		0.0f, 1.0f,		0.f, -1.f, 1.f,		//v3
 };
-
-
-GLfloat flat_square[] = {
-	// X,   Y,   Z,      R,  G,  B,      U,   V,      Nx,  Ny, Nz
-	// Top face
-	-0.5f, 0.0f, 0.5f, 1.f, 1.f, 1.f, 0.0f, 10.0f, 0.f, 1.f, 0.f,
-	0.5f, 0.0f, 0.5f, 1.f, 1.f, 1.f, 10.0f, 10.0f, 0.f, 1.f, 0.f,
-	0.5f, 0.0f, -0.5f, 1.f, 1.f, 1.f, 10.0f, 0.0f, 0.f, 1.f, 0.f,
-
-	-0.5f, 0.0f, 0.5f, 1.f, 1.f, 1.f, 0.0f, 10.0f, 0.f, 1.f, 0.f,
-	0.5f, 0.0f, -0.5f, 1.f, 1.f, 1.f, 10.0f, 0.0f, 0.f, 1.f, 0.f,
-	-0.5f, 0.0f, -0.5f, 1.f, 1.f, 1.f, 0.0f, 0.0f, 0.f, 1.f, 0.f,
-};
-
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -484,6 +472,42 @@ void initialise_buffers() {
 		}
 	}
 
+
+	// ---- SHOOTING STAR ----
+	// Configure VAO 6
+	glBindVertexArray(VAOs[6]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[6]);
+
+	// Define control points
+	std::vector<point> ctrl_points = {
+			point(-5.f, 4.f, 0.f),
+			point(0.f, 2.f, 0.f),
+			point(-5.f, -4.f, 0.f),
+			point(-2.f, -3.f, 0.f),
+			point(-4.f, 2.f, 0.f),
+			point(-5.f, -2.f, 0.f),
+			point(5.f, 4.f, 0.f),
+	};
+
+	// Create curve points for the shooting star
+	std::vector<point> points;
+	points = EvaluateBezierCurve(ctrl_points, 128);
+
+	// Create the curve vector
+	int num_curve_verts = 0;
+	int num_curve_floats = 0;
+	shooting_star.clear();
+	shooting_star = MakeFloatsFromVector(points, 1.f, 1.f, 0.f);
+	// Upload the vertex data to the VBO
+	glBufferData(GL_ARRAY_BUFFER, shooting_star.size() * sizeof(GLfloat), shooting_star.data(), GL_STATIC_DRAW);
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// Colour attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -519,6 +543,71 @@ void initialise_cameras() {
 	InitCamera(Fixed_Rotate_Camera);
 	// Initial position far view with slight x and y offset
 	MoveAndOrientCamera(Fixed_Rotate_Camera, glm::vec3(0.f, 0.f, 0.f), cam_dist, -15.f, -20.f);
+}
+
+float random_range(float min, float max) {
+	return min + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (max - min)));
+}
+
+void update_shooting_star_path() {
+	// Randomize control points (example: stay within view bounds)
+	std::vector<point> ctrl_points;
+	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(4.f, 6.f), 0.f));
+	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(0.f, 3.f), 0.f));
+	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(-3.f, -1.f), 0.f));
+	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(-4.f, -2.f), 0.f));
+
+	std::vector<point> points = EvaluateBezierCurve(ctrl_points, 128);
+
+	shooting_star.clear();
+	shooting_star = MakeFloatsFromVector(points, 1.f, 1.f, 0.f);
+
+	// Update VBO
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[6]);
+	glBufferData(GL_ARRAY_BUFFER, shooting_star.size() * sizeof(GLfloat), shooting_star.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void draw_star(int program) {
+    glUseProgram(program);
+
+	glm::mat4 view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
+	glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+	glm::mat4 projection = glm::perspective(glm::radians(45.f), (float)width / (float)height, .01f, 100.f);
+	glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.f, 8.f, 0.f));
+	model = glm::rotate(model, glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
+	model = glm::scale(model, glm::vec3(1.f, 1.f, 1.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glLineWidth(3.0f); 
+    glBindVertexArray(VAOs[6]);
+
+	static float t = 0.0f;
+	const float speed = 0.5f; 
+	const int totalPoints = shooting_star.size() / 6;
+	const int trailLength = 20;
+
+    // Draw the line one part at a time
+	int startIdx = (int)(t * totalPoints);
+	int endIdx = std::min(startIdx + trailLength, totalPoints);
+	int count = endIdx - startIdx;
+
+	if (count > 0) {
+		glDrawArrays(GL_LINE_STRIP, startIdx, count);
+	}
+
+	// Update time parameter
+	t += speed * deltaTime; 
+	if (t > 1.0f) {
+		t = 0.0f;
+		// Give the star a new path
+		update_shooting_star_path();
+	}
 }
 
 void draw_cylinder(int program) {
@@ -606,7 +695,6 @@ void draw_jet(unsigned int program) {
 	// Draw the Plane
 	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 }
-
 
 void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
 	// Set the viewport to the size of the shadow map
@@ -776,6 +864,7 @@ int main() {
 	// Create a vertext shader and Fragment Shader using the Shader class.
 	GLuint lighting_program = CompileShader("lighting_vertex.vert", "lighting_fragment.frag");
 	GLuint shadow_shader = CompileShader("shadow.vert", "shadow.frag");
+	GLuint star_shader = CompileShader("star.vert", "star.frag");
 	
 	// Initialise the cameras
 	initialise_cameras();
@@ -877,6 +966,8 @@ int main() {
 		generateDepthMap(shadow_shader, shadow, projectedLightSpaceMatrix);
 		// Render the pyramid with a shadow map
 		renderWithShadow(lighting_program, shadow, projectedLightSpaceMatrix);
+
+		draw_star(star_shader);
 
 		// First person camera
 		if (current_camera == 1) {

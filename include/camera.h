@@ -130,6 +130,8 @@ void OrientFirstPersonCamera(SCamera& camera, float xoffset, float yoffset)
 void InitFirstPersonCamera(SCamera& camera, glm::vec3 startPosition = glm::vec3(0.0f, 0.0f, 3.0f))
 {
 	camera.Position = startPosition;
+	// Increase starting height
+	camera.Position.y = 2.f;
 	camera.Front = glm::vec3(0.0f, 0.0f, -1.0f);
 	camera.WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 	// Z axis

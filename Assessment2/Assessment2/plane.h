@@ -33,7 +33,7 @@ float get_dune_height(float x, float z, float maxHeight, float frequency, float 
         sharpness
     );
     // Rotated 45 degrees
-    float deg = glm::radians(45.f);
+    float deg = glm::radians(45.0f);
     float x2 = x * cos(deg) - z * sin(deg);
     float z2 = x * sin(deg) + z * cos(deg);
     height += maxHeight * 0.3f * pow(
