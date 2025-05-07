@@ -33,6 +33,8 @@ struct vertex
 	glm::vec3 col;
 	glm::vec3 nor;
 	glm::vec2 tex;
+	glm::vec3 tangent;    // Added for normal mapping
+	glm::vec3 bitangent;  // Added for normal mapping
 };
 
 struct triangle
@@ -43,6 +45,73 @@ public:
 	int primID;
 	int texID;
 };
+
+// Function to calculate tangent and bitangent vectors
+void calculateTangentSpace(vertex& v1, vertex& v2, vertex& v3)
+{
+	// Positions
+	glm::vec3 pos1(v1.pos.x, v1.pos.y, v1.pos.z);
+	glm::vec3 pos2(v2.pos.x, v2.pos.y, v2.pos.z);
+	glm::vec3 pos3(v3.pos.x, v3.pos.y, v3.pos.z);
+
+	// Texture coordinates
+	glm::vec2 uv1 = v1.tex;
+	glm::vec2 uv2 = v2.tex;
+	glm::vec2 uv3 = v3.tex;
+
+	// Edges of the triangle in 3D space
+	glm::vec3 edge1 = pos2 - pos1;
+	glm::vec3 edge2 = pos3 - pos1;
+
+	// Texture space differences
+	glm::vec2 deltaUV1 = uv2 - uv1;
+	glm::vec2 deltaUV2 = uv3 - uv1;
+
+	// Avoid division by zero
+	float denominator = (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+	if (abs(denominator) < 0.0001f) {
+		v1.tangent = v2.tangent = v3.tangent = glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f));
+		v1.bitangent = v2.bitangent = v3.bitangent = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
+		return;
+	}
+
+	float f = 1.0f / denominator;
+
+	// Calculate tangent and bitangent vectors
+	// tangent = (edge1 * deltaUV2.y - edge2 * deltaUV1.y) / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y)
+	// bitangent = (edge2 * deltaUV1.x - edge1 * deltaUV2.x) / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y)
+	glm::vec3 tangent, bitangent;
+	tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+	bitangent.x = f * (deltaUV1.x * edge2.x - deltaUV2.x * edge1.x);
+	bitangent.y = f * (deltaUV1.x * edge2.y - deltaUV2.x * edge1.y);
+	bitangent.z = f * (deltaUV1.x * edge2.z - deltaUV2.x * edge1.z);
+
+	// Normalize
+	tangent = glm::normalize(tangent);
+	bitangent = glm::normalize(bitangent);
+
+	// Make sure the tangent is orthogonal to the normal
+	// Gram-Schmidt orthogonalization
+	glm::vec3 normal1 = glm::vec3(v1.nor);
+	glm::vec3 normal2 = glm::vec3(v2.nor);
+	glm::vec3 normal3 = glm::vec3(v3.nor);
+
+	tangent = glm::normalize(tangent - normal1 * glm::dot(normal1, tangent));
+
+	// Now ensure the bitangent is orthogonal to both normal and tangent
+	// (Alternative to using cross product, which can flip the direction)
+	bitangent = glm::normalize(bitangent - normal1 * glm::dot(normal1, bitangent) -
+		tangent * glm::dot(tangent, bitangent));
+
+	// Assign the same tangent and bitangent to all vertices in this triangle
+	// For more accurate results in a full mesh, you would accumulate these per vertex
+	// and normalize at the end
+	v1.tangent = v2.tangent = v3.tangent = tangent;
+	v1.bitangent = v2.bitangent = v3.bitangent = bitangent;
+}
 
 int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* base_folder, std::map<std::string, GLuint>* textures = nullptr)
 {
@@ -57,7 +126,7 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 	}
 
 	// Load materials/textures if textures map is provided
-	std::map<int, GLuint> mat_to_tex_map; // Maps material index to texture ID
+	std::map<int, GLuint> mat_to_tex_map; 
 
 	if (textures != nullptr && !materials.empty()) {
 		for (size_t m = 0; m < materials.size(); m++) {
@@ -116,7 +185,8 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 					};
 				}
 				else {
-					vert.nor = glm::vec3(0.0f); // fallback normal
+					// Fallback normal
+					vert.nor = glm::vec3(0.0f); 
 				}
 
 				// Textures
@@ -127,8 +197,13 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 					};
 				}
 				else {
-					vert.tex = glm::vec2(0.0f); // fallback tex coords
+					// Fallback tex coords
+					vert.tex = glm::vec2(0.0f); 
 				}
+
+				// Initialize tangent and bitangent to zero 
+				vert.tangent = glm::vec3(0.0f);
+				vert.bitangent = glm::vec3(0.0f);
 
 				// Materials
 				if (mat_id >= 0 && mat_id < static_cast<int>(materials.size())) {
@@ -140,7 +215,8 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 					};
 				}
 				else {
-					vert.col = glm::vec3(1.0f); // default white
+					// Default white
+					vert.col = glm::vec3(1.0f); 
 				}
 
 				face_verts.push_back(vert);
@@ -156,8 +232,11 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 				tri.v2 = face_verts[1];
 				tri.v3 = face_verts[2];
 
+				// Calculate tangent and bitangent for this triangle
+				calculateTangentSpace(tri.v1, tri.v2, tri.v3);
+
 				tri.reflect = false;
-				tri.primID = io_tris->size(); 
+				tri.primID = io_tris->size();
 
 				// Assign texture ID if available
 				if (mat_id >= 0 && mat_to_tex_map.find(mat_id) != mat_to_tex_map.end()) {
@@ -165,7 +244,7 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 				}
 				else {
 					// No texture or default texture
-					tri.texID = 0; 
+					tri.texID = 0;
 				}
 
 				io_tris->push_back(tri);
@@ -173,7 +252,55 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 		}
 	}
 
-
 	printf("successfully parsed %s and read %d triangles \n", filename, io_tris->size());
 	return 0;
+}
+
+vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles, bool uses_normal) {
+	// Each triangle has 3 vertices
+	// Each vertex has 17 floats: (x,y,z,r,g,b,s,t,nx,ny,nz,tx,ty,tz,bx,by,bz)
+	std::vector<GLfloat> tri_array;
+	tri_array.reserve(triangles.size() * 3 * 17); 
+
+	for (const triangle& tri : triangles) {
+		const vertex* verts[3] = { &tri.v1, &tri.v2, &tri.v3 };
+
+		for (int i = 0; i < 3; ++i) {
+			const vertex& v = *verts[i];
+			// Position
+			tri_array.push_back(v.pos.x);
+			tri_array.push_back(v.pos.y);
+			tri_array.push_back(v.pos.z);
+
+			// Color
+			tri_array.push_back(v.col.r);
+			tri_array.push_back(v.col.g);
+			tri_array.push_back(v.col.b);
+
+			// Texture coordinates
+			tri_array.push_back(v.tex.x);
+			tri_array.push_back(v.tex.y);
+
+			// Normal
+			tri_array.push_back(v.nor.x);
+			tri_array.push_back(v.nor.y);
+			tri_array.push_back(v.nor.z);
+			if (uses_normal) {
+				// Tangent
+				tri_array.push_back(v.tangent.x);
+				tri_array.push_back(v.tangent.y);
+				tri_array.push_back(v.tangent.z);
+
+				// Bitangent
+				tri_array.push_back(v.bitangent.x);
+				tri_array.push_back(v.bitangent.y);
+				tri_array.push_back(v.bitangent.z);
+				
+			}
+		}
+	}
+	
+	
+
+	return tri_array;
 }

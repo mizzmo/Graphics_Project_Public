@@ -10,8 +10,8 @@ in vec4 FragPosProjectedLightSpace;
 
 uniform float shininess;
 
-in vec3 tangent;
-in vec3 bitangent;
+in mat3 TBN;
+
 
 // Shadows
 uniform sampler2D shadowMap;
@@ -53,23 +53,12 @@ vec3 calculateNormalFromMap() {
     if (!uses_normal) {
         return normalize(nor);
     }
-    
     // Sample the normal map 
     vec3 normalColor = texture(normal_map, texCoords).rgb;
     
     // Transform from [0,1] range to [-1,1] range
     vec3 normalTangentSpace = normalize(normalColor * 2.0 - 1.0);
     
-    // Transform from tangent space to world space
-    vec3 N = normalize(nor);
-    vec3 T = normalize(tangent);
-
-    T = normalize(T - dot(T, N) * N);
-    vec3 B = normalize(bitangent);
-    
-    mat3 TBN = mat3(T, B, N);
-    
-    // Transform normal from tangent space to world space
     return normalize(TBN * normalTangentSpace);
 }
 
@@ -87,39 +76,6 @@ float calculateSpecular(vec3 normal, vec3 viewDir, vec3 lightDir) {
     
     // Default specular intensity if no specular map is used
     return spec * 0.5;
-}
-
-
-// ---- Bump Map ----
-vec3 calculateNormalFromBumpMap() {
-    // Sample height values from bump map
-    vec2 texSize = textureSize(bump_map, 0);
-    vec2 texelSize = 1.0 / texSize;
-    
-    // Sample height at center and neighboring pixels
-    float heightCenter = texture(bump_map, texCoords).r;
-    float heightRight = texture(bump_map, texCoords + vec2(texelSize.x, 0.0)).r;
-    float heightLeft = texture(bump_map, texCoords - vec2(texelSize.x, 0.0)).r;
-    float heightUp = texture(bump_map, texCoords + vec2(0.0, texelSize.y)).r;
-    float heightDown = texture(bump_map, texCoords - vec2(0.0, texelSize.y)).r;
-    
-    // Calculate gradients in tangent space
-    float dx = (heightRight - heightLeft) * bump_scale;
-    float dy = (heightUp - heightDown) * bump_scale;
-    
-    // Create normal in tangent space
-    vec3 normalTangentSpace = normalize(vec3(-dx, -dy, 1.0));
-    
-    // Transform to world space using TB
-    vec3 N = normalize(nor);
-    vec3 T = normalize(tangent);
-    T = normalize(T - dot(T, N) * N);
-    vec3 B = cross(N, T);
-    // Build matrix
-    mat3 TBN = mat3(T, B, N);
-    
-    // Transform the tangent-space normal to world space
-    return normalize(TBN * normalTangentSpace);
 }
 
 // ---- Shadows ----
@@ -164,11 +120,9 @@ float shadowOnFragment(vec4 FragPosProjectedLightSpace) {
 vec3 CalculateDirectionalIllumination() {
     vec3 Nnor = normalize(nor);
 
-    // Normal and Bump Maps - determine which to use
+    // Normal and Bump Maps
     if (uses_normal) {
         Nnor = calculateNormalFromMap();
-    } else if (bump_scale > 0.0) { 
-        Nnor = calculateNormalFromBumpMap();
     }
 
     // Directional light vector
@@ -180,9 +134,10 @@ vec3 CalculateDirectionalIllumination() {
 
     float iDiff = max(dot(Nnor, NLightDirection), 0.0);
 
-    // Specular Component - use the specular mapping function
+    // Specular Component
     float iSpec;
     if (uses_specular) {
+        // Use specular map
         iSpec = calculateSpecular(Nnor, NViewDirection, NLightDirection);
     } else {
         iSpec = pow(max(dot(Nnor, NHalfWayVec), 0.0), shininess);
@@ -209,8 +164,6 @@ vec3 CalculateSpotIllumination() {
     // Normal or Bump mapping
     if (uses_normal) {
         Nnor = calculateNormalFromMap();
-    } else if (bump_scale > 0.0) { 
-        Nnor = calculateNormalFromBumpMap();
     }
 
     vec3 totalLight = vec3(0.0);
@@ -247,7 +200,7 @@ vec3 CalculateSpotIllumination() {
             // Diffuse term 
             float iDiff = max(dot(Nnor, lightDir), 0.0);
 
-            // Specular term using our specular mapping function
+            // Specular term using specular mapping function
             float iSpec;
             if (uses_specular) {
                 iSpec = calculateSpecular(Nnor, viewDir, lightDir);
@@ -279,13 +232,16 @@ vec4 applyGlowMap(vec4 baseColor) {
     if (uses_glow) {
         vec4 glowColor = texture(glow_map, texCoords);
         // Intensity of glow
-        return clamp(baseColor + glowColor * 0.4, 0.0, 1.0);
+        float intensity = 0.4f;
+        return clamp(baseColor + glowColor * intensity, 0.0, 1.0);
     }
     return baseColor;
 }
 
 void main()
 {
+
+    
     // Calculate light contributions
     vec3 dirLightColor = CalculateDirectionalIllumination();
     vec3 spotLightColor = CalculateSpotIllumination(); 
@@ -293,7 +249,7 @@ void main()
     // Combine both light sources
     vec3 finalLightColor = dirLightColor + spotLightColor;
     
-    // Apply to appropriate base color
+    // Apply to base color
     if (uses_texture) {
         vec4 texColor = texture(tex0, texCoords);
         // Apply lighting to texture color
