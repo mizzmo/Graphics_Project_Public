@@ -16,6 +16,7 @@
 #include "shadow.h"
 #include "cylinder.h"
 #include "casteljau.h"
+#include "interactivity.h"
 
 
 // useful for picking colours
@@ -24,7 +25,8 @@
 
 
 unsigned int width = 800;
-unsigned int height = 600;
+unsigned int height = 600; 
+float fov = 45.f;
 
 // Interactive Cameras
 SCamera Model_Viewer_Camera;
@@ -50,6 +52,11 @@ float orbit_radius = 10.0f;
 float orbit_speed = 0.00005f; 
 // Center of the orbit
 glm::vec3 orbit_center(0.0f, 0.0f, 0.0f);
+
+// UFO animation
+float start_time = 0.f;
+bool ufo_animation = false;
+bool beam_animation = false;
 
 // Directional Light
 glm::vec3 lightDirection = glm::vec3(-0.6f, -0.5f, 0.6f);
@@ -78,6 +85,13 @@ std::vector<GLuint> ufo_texture_ids;
 std::vector<GLuint> jet_texture_ids;
 
 GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex;
+
+
+// Copy of matrices used by UFO
+glm::mat4 projection;
+glm::mat4 view;
+// Determine if the UFO has been clicked
+bool is_clicked = false;
 
 // Mouse Callback
 float lastX = 800.0f / 2.0f;
@@ -191,7 +205,7 @@ GLfloat cube_vertices[] = {
 	 1.0f, -1.0f,  1.0f
 };
 
-void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Handle key presses
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -200,10 +214,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
 	{
 		lightDirection = activeCamera->Front;
-		printf("Light Direction: %f %f %f\n", lightDirection.x, lightDirection.y, lightDirection.z);
-		printf("Camera Position: %f %f %f\n", activeCamera->Position.x, activeCamera->Position.y, activeCamera->Position.z);
 	}
-		
 		
 	
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
@@ -279,7 +290,29 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	
 }
 
-void ProcessInput(GLFWwindow* window, SCamera& camera, float deltaTime)
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		// Where the UFO is in the scene
+		glm::vec3 ship_pos = glm::vec3(0.f, 3.f, 0.f);
+
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		glm::vec3 rayDir = screenToWorldRay(xpos, ypos, width, height, projection, view);
+		// Radius of detection
+		float pickRadius = 1.5f; 
+		if (rayIntersectsSphere(activeCamera->Position, rayDir, ship_pos, pickRadius)) {
+			std::cout << "UFO clicked!\n";
+			is_clicked = true;
+			if (!ufo_animation) {
+				ufo_animation = true;
+				beam_animation = true;
+				start_time = glfwGetTime();
+			}
+		}
+	}
+}
+
+void process_input(GLFWwindow* window, SCamera& camera, float deltaTime)
 {
 	if (current_camera == 1) {
 		float velocity = camera.MovementSpeed * deltaTime;
@@ -296,6 +329,13 @@ void ProcessInput(GLFWwindow* window, SCamera& camera, float deltaTime)
 		if (camera.Position.y < 0.1f)
 			camera.Position.y = 0.1f;
 	}
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+		// Reset the click state for UFO position to reset
+		is_clicked = false;
+		ufo_animation = false;
+		beam_animation = false;
+	}
+	
 
 }
 
@@ -331,38 +371,41 @@ vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles) {
 	return tri_array;
 }
 
-void ResizeCallback(GLFWwindow*, int w, int h)
+void resize_callback(GLFWwindow*, int w, int h)
 {
-	// Handle window resizes.
-	// Area we want to render in in the window.
-	// Coordinates and window size.
+	// Update width and height values
+	width = w;
+	height = h;
+
 	glViewport(0, 0, w, h);
+	// Get new aspect ratio
+	float aspect = (float)width / (float)height;
+	// Update projection matrix with new widow size
+	projection = glm::perspective(glm::radians(fov), aspect, 0.01f, 100.0f);
 }
 
-void MouseCallback(GLFWwindow* window, double xpos, double ypos)
+void mouse_move_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	// Only process mouse input if the current active camera is this one
-	if (current_camera != 1) {
-		return;
-	}
+	if (current_camera == 1) {
+		// On first mouse event init last mouse position to avoid jump
+		if (firstMouse) {
+			lastX = xpos;
+			lastY = ypos;
+			firstMouse = false;
+		}
 
-	// On first mouse event init last mouse position to avoid jump
-	if (firstMouse) {
+		// Calculate movement since last frame
+		float xoffset = xpos - lastX;
+		float yoffset = lastY - ypos;
+
+		// Update last pos
 		lastX = xpos;
 		lastY = ypos;
-		firstMouse = false;
+
+		// Apply offset
+		OrientFirstPersonCamera(*activeCamera, xoffset, yoffset);
 	}
-
-	// Calculate movement since last frame
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
-
-	// Update last pos
-	lastX = xpos;
-	lastY = ypos;
-
-	// Apply offset
-	OrientFirstPersonCamera(*activeCamera, xoffset, yoffset);
 }
 
 void initialise_buffers() {
@@ -669,15 +712,55 @@ void draw_star(unsigned int program) {
 	}
 }
 
-void draw_cylinder(unsigned int program) {
+void draw_beam(unsigned int program) {
 	glBindVertexArray(VAOs[4]);
-
-	// Apply transformations
 	glm::mat4 modelCylinder = glm::mat4(1.0f);
-	modelCylinder = glm::scale(modelCylinder, glm::vec3(1.f, 1.f, 1.f));
-	modelCylinder = glm::translate(modelCylinder, glm::vec3(0.f, 1.f, 0.f));
-	// Rotate in the Y to be upright
-	modelCylinder = glm::rotate(modelCylinder, glm::radians(-90.f), glm::vec3(1.f, 0.f, 0.f));
+	if (!is_clicked) {
+		// Apply transformations
+		modelCylinder = glm::scale(modelCylinder, glm::vec3(1.f, 1.f, 1.f));
+		modelCylinder = glm::translate(modelCylinder, glm::vec3(0.f, 1.f, 0.f));
+		// Rotate in the Y to be upright
+		modelCylinder = glm::rotate(modelCylinder, glm::radians(-90.f), glm::vec3(1.f, 0.f, 0.f));
+	}
+	else {
+		if (beam_animation) {
+			float time_now = glfwGetTime();
+			// Time since animation started
+			float t = time_now - start_time;
+			float duration = 3.f;
+			float half = duration / 2.0f;
+			float clamped_t = glm::min(t, duration);
+
+			glm::vec3 scale = glm::vec3(1.f);
+
+			if (clamped_t < half) {
+				// Shrink X and Z
+				float progress = clamped_t / half;
+				float horizontal_scale = glm::mix(1.0f, 0.01f, progress);
+				scale = glm::vec3(horizontal_scale, 1.0f, horizontal_scale);
+			}
+			else {
+				// Shrink Y
+				float progress = (clamped_t - half) / half;
+				float vertical_scale = glm::mix(1.0f, 0.01f, progress);
+				scale = glm::vec3(0.01f, vertical_scale, 0.01f);
+			}
+
+			// Apply transforms
+			modelCylinder = glm::translate(modelCylinder, glm::vec3(0.f, 1.f, 0.f));
+			modelCylinder = glm::rotate(modelCylinder, glm::radians(-90.f), glm::vec3(1.f, 0.f, 0.f));
+			modelCylinder = glm::scale(modelCylinder, scale);
+
+			if (t >= duration) {
+				beam_animation = false;
+			}
+		}
+		else {
+			// Scale to be very small
+			modelCylinder = glm::scale(modelCylinder, glm::vec3(0.f, 0.f, 0.f));
+		}
+	}
+
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelCylinder));
 
 	int num_object_vertices = cylinder.size() / 11;
@@ -688,12 +771,48 @@ void draw_cylinder(unsigned int program) {
 void draw_ufo(unsigned int program) {
 	// Bind the VAO
 	glBindVertexArray(VAOs[2]);
-
-	// Apply transformations to the UFO
 	glm::mat4 modelUFO = glm::mat4(1.0f);
-	modelUFO = glm::translate(modelUFO, glm::vec3(0.f, 1.5f, 0.f));
-	modelUFO = glm::rotate(modelUFO, (float)glfwGetTime() / 20, glm::vec3(0.f, 1.f, 0.f));
-	modelUFO = glm::scale(modelUFO, glm::vec3(0.06f, 0.06f, 0.06f));
+	// If UFO not clicked
+	if (!is_clicked) {
+		// Apply transformations to the UFO
+		modelUFO = glm::translate(modelUFO, glm::vec3(0.f, 1.5f, 0.f));
+		modelUFO = glm::rotate(modelUFO, (float)glfwGetTime() / 20, glm::vec3(0.f, 1.f, 0.f));
+		modelUFO = glm::scale(modelUFO, glm::vec3(0.06f, 0.06f, 0.06f));
+	}
+	else {
+		if (ufo_animation) {
+			// If UFO clicked, animation
+			// Time since animation started
+			float current_time = glfwGetTime();
+			float t = current_time - start_time;
+
+			// Animation speed
+			float duration = 5.0f;
+
+			// Clamp t to 0 and duration
+			float clamped_t = glm::min(t, duration);
+
+			float y = glm::mix(1.5f, 10.0f, clamped_t / duration);
+			float z = glm::mix(0.0f, -10.0f, clamped_t / duration);
+
+			// Scale shrinks from normal size to very small
+			float scale = glm::mix(0.06f, 0.005f, clamped_t / duration);
+
+			modelUFO = glm::translate(modelUFO, glm::vec3(0.f, y, z));
+			modelUFO = glm::rotate(modelUFO, current_time / 20, glm::vec3(0.f, 1.f, 0.f));
+			modelUFO = glm::scale(modelUFO, glm::vec3(scale));
+
+			// Optionally stop animation after duration
+			if (t >= duration) {
+				ufo_animation = false;
+			}
+		}
+		else {
+			// Keep UFO very small
+			modelUFO = glm::scale(modelUFO, glm::vec3(0.f, 0.f, 0.f));
+		}
+	}
+	
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelUFO));
 
 
@@ -795,7 +914,7 @@ void draw_skybox(unsigned int program) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
+void generate_depth_map(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
 	// Set the viewport to the size of the shadow map
 	glViewport(0, 0, SH_MAP_WIDTH, SH_MAP_HEIGHT);
 
@@ -821,7 +940,7 @@ void generateDepthMap(unsigned int shadowShaderProgram, ShadowStruct shadow, glm
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
+void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
 	glViewport(0, 0, width, height);
 
 	static const GLfloat bgd[] = { .8f, .8f, .8f, 1.f };
@@ -862,8 +981,15 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 		spotLightDirections[i] = dir;
 	}
 
-	// Upload spotlight directions
-	glUniform3fv(glGetUniformLocation(renderShaderProgram, "spotLightDirections"), NUM_SPOTLIGHTS, glm::value_ptr(spotLightDirections[0]));
+	// Give false directions to remove spotlights when ship dissapears
+	if (!is_clicked) {
+		glUniform3fv(glGetUniformLocation(renderShaderProgram, "spotLightDirections"), NUM_SPOTLIGHTS, glm::value_ptr(spotLightDirections[0]));
+	}
+	else {
+		std::vector<glm::vec3> dummyDirections(NUM_SPOTLIGHTS, glm::vec3(0.0f));
+		glUniform3fv(glGetUniformLocation(renderShaderProgram, "spotLightDirections"), NUM_SPOTLIGHTS, glm::value_ptr(dummyDirections[0]));
+	}
+
 	
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "spotLightPos"), spotLightPos.x, spotLightPos.y, spotLightPos.z);
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "spotLightColour"), 0.f, 1.f, 0.f);
@@ -871,12 +997,12 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "spotLightInnerCutoff"), 45.f);
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "spotLightOuterCutoff"), 45.f);
 
-	glm::mat4 view = glm::mat4(1.f);
+	view = glm::mat4(1.f);
 	view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
 	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-	glm::mat4 projection = glm::mat4(1.f);
-	projection = glm::perspective(glm::radians(45.f), (float)width / (float)height, .01f, 100.f);
+	projection = glm::mat4(1.f);
+	projection = glm::perspective(glm::radians(fov), (float)width / (float)height, .01f, 100.f);
 	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 	draw_pyramid(renderShaderProgram);
@@ -890,7 +1016,7 @@ void renderWithShadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm
 	// --- Cylinder ---
 	// Deactivate textures
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), false);
-	draw_cylinder(renderShaderProgram);
+	draw_beam(renderShaderProgram);
 	// Re-activate textures
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);
 
@@ -957,15 +1083,16 @@ int main() {
 	// Add to context.
 	glfwMakeContextCurrent(window);
 	// Set what happens when keys are pressed
-	glfwSetKeyCallback(window, KeyCallback);
+	glfwSetKeyCallback(window, key_callback);
 	// Set callback for window resize
-	glfwSetWindowSizeCallback(window, ResizeCallback);
+	glfwSetWindowSizeCallback(window, resize_callback);
 	// Tracks mouse cursor
-	glfwSetCursorPosCallback(window, MouseCallback);
-	// Make cursor invisible
+	glfwSetCursorPosCallback(window, mouse_move_callback);
+	// Callback for mouse buttons
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	// Make cursor hidden
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	
 
 	// Init gl3w after making context.
 	if (gl3wInit()) {
@@ -1099,11 +1226,12 @@ int main() {
 		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 projectedLightSpaceMatrix = lightProjection * lightView;
 
+		// Must be drawn first
 		draw_skybox(skybox_shader);
 
-		generateDepthMap(shadow_shader, shadow, projectedLightSpaceMatrix);
+		generate_depth_map(shadow_shader, shadow, projectedLightSpaceMatrix);
 		// Render the pyramid with a shadow map
-		renderWithShadow(lighting_program, shadow, projectedLightSpaceMatrix);
+		render_with_shadow(lighting_program, shadow, projectedLightSpaceMatrix);
 
 		draw_star(star_shader);
 
@@ -1116,7 +1244,7 @@ int main() {
 			deltaTime = currentFrame - lastFrame;
 			lastFrame = currentFrame;
 
-			ProcessInput(window, *activeCamera, deltaTime);
+			process_input(window, *activeCamera, deltaTime);
 		}
 		// Orbiting camera
 		if (current_camera == 2) {

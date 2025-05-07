@@ -148,6 +148,7 @@
     <ClInclude Include="..\..\include\texture.h" />
     <ClInclude Include="..\..\include\tiny_obj_loader.h" />
     <ClInclude Include="cylinder.h" />
+    <ClInclude Include="interactivity.h" />
     <ClInclude Include="object_parser.h" />
     <ClInclude Include="plane.h" />
   </ItemGroup>
