@@ -970,6 +970,9 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightColour"), 1.f, 0.98f, 0.7f);
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+	// Default Shininess
+	float default_shine = 64.f;
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
 	// Spot lighting
 
 	float t = glfwGetTime(); 
@@ -1011,14 +1014,23 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	// Activate sand texture in texture unit 8
 	glActiveTexture(GL_TEXTURE8);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 8);
+	// Reduced shininess for sand
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), 32.f);
 	draw_dunes(renderShaderProgram);
+	// Set back to default
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
+
+
 
 	// --- Cylinder ---
 	// Deactivate textures
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), false);
+	// Very shiny for beam
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), 512.f);
 	draw_beam(renderShaderProgram);
 	// Re-activate textures
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
 
 
 	// ---- Jet Plane ----
@@ -1055,11 +1067,11 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	// Activate specular map
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_specular"), true);
 	// Set a scale for the bump map
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "bump_scale"), 0.1f);
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "bump_scale"), 30.f);
+	// Ship is more shiny than rest of scene
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), 256.f);
 
 	draw_ufo(renderShaderProgram);
-
-	
 
 }
 
