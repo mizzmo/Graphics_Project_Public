@@ -472,7 +472,7 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
     vec3 kD = vec3(1.0) - kS; 
     kD *= 1.0 - metallicValue;
         
-    // Combine components: diffuse + specular
+    // Combine diffuse and specular
     float NdotL = max(dot(N, L), 0.0);
     Lo += (kD * albedoValue / PI + specular) * radiance * NdotL * (1.0 - shadow);
     
@@ -578,7 +578,7 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
 void main()
 {
     // Get correct normal depending on which technique in use
-    // We calculate in main to be consistent accross each process
+    // Calculate in main to be consistent accross each process
     vec3 N;
     if (uses_normal && uses_parrallax) {
         N = ParallaxMappedNormal();
@@ -617,10 +617,10 @@ void main()
         float roughnessValue;
         float aoValue;
     
-        // Ensure scaled coordinates are correct for PBR
+        // Use scaled coordinates
         vec2 pbrTexCoords = currentTexCoords * uv_scale;
     
-        // Sample textures with the proper scaling
+        // Sample textures
         albedoValue = texture(albedoMap, pbrTexCoords).rgb;
         metallicValue = texture(metallicMap, pbrTexCoords).r;
         roughnessValue = texture(roughnessMap, pbrTexCoords).r;
@@ -640,7 +640,7 @@ void main()
         
         finalColour = vec4(pbrColour, 1.0);
     } else {
-        // Use the non-PBR lighting
+        // Use non-PBR lighting
         vec3 dirLightColour = CalculateDirectionalIllumination(N, V);
         vec3 spotLightColour = CalculateSpotIllumination(N, V); 
         vec3 posLightColour = CalculatePositionalIllumination(N, V);
