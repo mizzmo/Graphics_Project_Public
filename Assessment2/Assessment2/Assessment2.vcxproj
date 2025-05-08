@@ -136,22 +136,22 @@
     <ClCompile Include="Assessment2.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\bitmap.h" />
-    <ClInclude Include="..\..\include\camera.h" />
-    <ClInclude Include="..\..\include\casteljau.h" />
-    <ClInclude Include="..\..\include\error.h" />
-    <ClInclude Include="..\..\include\file.h" />
-    <ClInclude Include="..\..\include\point.h" />
-    <ClInclude Include="..\..\include\shader.h" />
-    <ClInclude Include="..\..\include\shadow.h" />
-    <ClInclude Include="..\..\include\stb_image.h" />
-    <ClInclude Include="..\..\include\texture.h" />
-    <ClInclude Include="..\..\include\tiny_obj_loader.h" />
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="casteljau.h" />
     <ClInclude Include="cylinder.h" />
+    <ClInclude Include="error.h" />
+    <ClInclude Include="file.h" />
     <ClInclude Include="interactivity.h" />
+    <ClInclude Include="object_loader.h" />
     <ClInclude Include="object_parser.h" />
     <ClInclude Include="plane.h" />
+    <ClInclude Include="point.h" />
+    <ClInclude Include="shader.h" />
+    <ClInclude Include="shadow.h" />
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="tangent.h" />
+    <ClInclude Include="texture.h" />
+    <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="lighting_fragment.frag" />
