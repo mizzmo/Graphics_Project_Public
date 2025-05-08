@@ -142,7 +142,6 @@
     <ClInclude Include="error.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="interactivity.h" />
-    <ClInclude Include="object_loader.h" />
     <ClInclude Include="object_parser.h" />
     <ClInclude Include="plane.h" />
     <ClInclude Include="point.h" />
