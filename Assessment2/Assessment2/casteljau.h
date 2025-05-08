@@ -47,15 +47,15 @@ std::vector<point> EvaluateBezierCurve(std::vector<point>ctrl_points, int num_ev
 std::vector<GLfloat> MakeFloatsFromVector(const std::vector<point>& points, float r, float g, float b) 
 {
     std::vector<GLfloat> vertices;
-    // Reserve space for efficiency (6 floats per point)
+    // 6 floats per point
     vertices.reserve(points.size() * 6);
 
     for (const auto& p : points) {
-        // Position (x, y, z)
+        // Position 
         vertices.push_back(p.x);
         vertices.push_back(p.y);
         vertices.push_back(p.z);
-        // Color (r, g, b)
+        // Colour 
         vertices.push_back(r);
         vertices.push_back(g);
         vertices.push_back(b);
