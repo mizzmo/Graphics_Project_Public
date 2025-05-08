@@ -80,6 +80,7 @@ std::vector<GLfloat> jet_array;
 std::vector<GLfloat> desert_dunes;
 std::vector<GLfloat> shooting_star;
 std::vector<GLfloat> rock_array;
+std::vector<GLfloat> vase_array;
 
 // Textures for UFO
 std::vector<GLuint> ufo_texture_ids;
@@ -88,7 +89,9 @@ std::vector<GLuint> jet_texture_ids;
 
 std::vector<GLuint> rock_texture_ids;
 
-GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex, rocks_tex, rocks_normal, rocks_depth, rocks_rough, rocks_metal, rocks_ao;
+std::vector<GLuint> vase_texture_ids;
+
+GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex, rocks_tex, rocks_normal, rocks_depth, rocks_rough, rocks_metal, rocks_ao, vase_tex, vase_normal, vase_metalic, vase_rough, vase_ao;
 
 
 // Copy of matrices used by UFO
@@ -106,8 +109,8 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f; 
 
 
-#define NUM_VBO 9
-#define NUM_VAO 9
+#define NUM_VBO 10
+#define NUM_VAO 10
 // Create a Vertex Array Object (VAO)
 // Stores pointers to VBOs and tells OpenGL how to interpret the data.
 // Need to make before VBO, can be used to switch between them
@@ -651,6 +654,51 @@ void initialise_buffers() {
 		}
 	}
 
+	// ---- VASE ----
+	// Configure VAO 9
+	glBindVertexArray(VAOs[9]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[9]);
+
+	// Create a texture map to store textures
+	std::map<std::string, GLuint> vase_textures;
+
+	// Load an Object with textures
+	std::vector<triangle> vase_triangles;
+	// Specify the base folder path
+	obj_path = "objs/vase/Flowervase.obj";
+	base_path = "objs/vase/";
+	num_triangles = obj_parse(obj_path.c_str(), &vase_triangles, base_path.c_str(), &vase_textures);
+
+	// Convert to array of floats
+	vase_array = tri_to_fl_array(vase_triangles, true);
+	// Upload the vertex data to the VBO
+	glBufferData(GL_ARRAY_BUFFER, vase_array.size() * sizeof(GLfloat), vase_array.data(), GL_STATIC_DRAW);
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// Colour attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// Texture attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	// Normal attribute
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+	// Tangent attribute 
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(11 * sizeof(float)));
+	glEnableVertexAttribArray(4);
+	// Bitangent attribute 
+	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(14 * sizeof(float)));
+	glEnableVertexAttribArray(5);
+
+	// Store texture IDs for rendering
+	for (const auto& triangle : vase_triangles) {
+		if (triangle.texID > 0 && std::find(vase_texture_ids.begin(), vase_texture_ids.end(), triangle.texID) == vase_texture_ids.end()) {
+			vase_texture_ids.push_back(triangle.texID);
+		}
+	}
+
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -968,7 +1016,24 @@ void draw_rocks(unsigned int program) {
 
 
 	int num_object_vertices = rock_array.size() / 11;
-	// Draw the Sphinx
+	// Draw the Rocks
+	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
+}
+
+void draw_vase(unsigned int program) {
+	glBindVertexArray(VAOs[9]);
+	glm::mat4 model = glm::mat4(1.0f);
+
+	// Apply transformations
+	model = glm::translate(model, glm::vec3(3.f, 0.8f, 4.f));
+	model = glm::rotate(model, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
+	model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+
+	int num_object_vertices = vase_array.size() / 11;
+	// Draw the Vase
 	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 }
 
@@ -994,6 +1059,7 @@ void generate_depth_map(unsigned int shadowShaderProgram, ShadowStruct shadow, g
 	draw_dunes(shadowShaderProgram);
 	draw_jet(shadowShaderProgram);
 	draw_rocks(shadowShaderProgram);
+	draw_vase(shadowShaderProgram);
 	// Unbind the framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -1010,7 +1076,6 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, shadow.Texture);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "shadowMap"), 0);
-
 
 	// For the regular objects, set to false
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_specular"), false);
@@ -1068,6 +1133,34 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 
 
 	// --- PYRAMID ---
+
+	// Texture Unit 0 is used for Shadow Mapping.
+	// Texture Unit 1 is used by the Texture class.
+
+	// Bind to texture units
+	//Texture unit 11 - Rocks Base 
+	glActiveTexture(GL_TEXTURE11);
+	glBindTexture(GL_TEXTURE_2D, rocks_tex);
+
+	//Texture unit 12 - Rocks Diffuse 
+	glActiveTexture(GL_TEXTURE12);
+	glBindTexture(GL_TEXTURE_2D, rocks_normal);
+
+	//Texture unit 13 - Rocks Depth Map 
+	glActiveTexture(GL_TEXTURE13);
+	glBindTexture(GL_TEXTURE_2D, rocks_depth);
+
+	// Texture unit 14 - Rocks Metalic
+	glActiveTexture(GL_TEXTURE14);
+	glBindTexture(GL_TEXTURE_2D, rocks_metal);
+
+	// Texture unit 15 - Rocks AO
+	glActiveTexture(GL_TEXTURE15);
+	glBindTexture(GL_TEXTURE_2D, rocks_ao);
+
+	// Texture unit 16 - Rocks Roughness
+	glActiveTexture(GL_TEXTURE16);
+	glBindTexture(GL_TEXTURE_2D, rocks_rough);
 	glActiveTexture(GL_TEXTURE11);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 11);
 
@@ -1095,6 +1188,10 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 
 
 	// ---- DESERT PLANE ----
+
+	// Texture unit 8 - Sand
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, sand_tex);
 	// Activate sand texture in texture unit 8
 	glActiveTexture(GL_TEXTURE8);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 8);
@@ -1119,17 +1216,24 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 
 
 	// ---- JET PLANE ----
+	// Texture unit 9 - Jet Texture
+	glActiveTexture(GL_TEXTURE9);
+	glBindTexture(GL_TEXTURE_2D, jet_tex);
 	// Load texture
 	glActiveTexture(GL_TEXTURE9);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 9);
 
 	draw_jet(renderShaderProgram);
 
+	// Yellowish Ambient light
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "environmentIntensity"), 1.f, 0.98f, 0.7f);
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "environmentIntensity"), 1.5f);
+
 
 	// ---- ROCKS ----
 	// Base texture
 	glActiveTexture(GL_TEXTURE11);
-	//glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 11);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 11);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "albedoMap"), 11);
 
 	// Normal Map
@@ -1148,7 +1252,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glActiveTexture(GL_TEXTURE15);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "aoMap"), 15);
 
-	// Texture unit 2 - Rocks Roughness
+	// Texture unit 16 - Rocks Roughness
 	glActiveTexture(GL_TEXTURE16);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "roughnessMap"), 16);
 
@@ -1167,12 +1271,62 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_pbr"), false);
 
+	// ---- VASE ----
+	// Reuse texture units
+	glActiveTexture(GL_TEXTURE11);
+	glBindTexture(GL_TEXTURE_2D, vase_tex);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "albedoMap"), 11);
 
+	//Texture unit 12 -  Diffuse 
+	glActiveTexture(GL_TEXTURE12);
+	glBindTexture(GL_TEXTURE_2D, vase_normal);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "normal_map"), 12);
 
+	// Texture unit 14 -  Metalic
+	glActiveTexture(GL_TEXTURE14);
+	glBindTexture(GL_TEXTURE_2D, vase_metalic);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "metallicMap"), 14);
+
+	// Texture unit 15 -  AO
+	glActiveTexture(GL_TEXTURE15);
+	glBindTexture(GL_TEXTURE_2D, vase_ao);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "aoMap"), 15);
+
+	// Texture unit 16 -  Roughness
+	glActiveTexture(GL_TEXTURE16);
+	glBindTexture(GL_TEXTURE_2D, vase_rough);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "roughnessMap"), 16);
+	
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), true);
+
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_pbr"), true);
+
+	draw_vase(renderShaderProgram);
+
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_pbr"), false);
 	
 
 	// ---- UFO ----
 	// Activate textures for UFO
+	// Texture unit 3 - UFO Diffuse
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, ship_tex);
+
+	// Texture unit 4 - UFO Glow
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, ship_glow);
+
+	// Texture unit 5 - UFO Normal
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, ship_normal);
+
+	// Texture unit 6 - UFO Specular
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, ship_specular);
+
+	// Texture unit 7 - UFO Bump
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, ship_bump);
 	// Texture Unit 3 - UFO Diffuse
 	glActiveTexture(GL_TEXTURE3);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 3);
@@ -1254,12 +1408,17 @@ int main() {
 	GLuint shadow_shader = CompileShader("shadow.vert", "shadow.frag");
 	GLuint star_shader = CompileShader("star.vert", "star.frag");
 	GLuint skybox_shader = CompileShader("skybox.vert", "skybox.frag");
+
 	
 	// Initialise the cameras
 	initialise_cameras();
 
 	// Create VAO and VBOs
 	initialise_buffers();
+
+	//Texture unit 10 - Cubemap
+	glActiveTexture(GL_TEXTURE10);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
 
 	
 	// Sand using MipMaps
@@ -1291,7 +1450,7 @@ int main() {
 
 	sand_tex = setup_mipmaps(sand_files, 11);
 	// Texture to load.
-	brick_tex = setup_texture("bricks.jpg");
+	// SRGB should be true unless for PBR
 	ship_tex = setup_texture("objs/ufo/ufo_diffuse.png");
 	ship_glow = setup_texture("objs/ufo/ufo_diffuse_glow.png");
 	ship_normal = setup_texture("objs/ufo/ufo_normal.png");
@@ -1299,77 +1458,23 @@ int main() {
 	ship_bump = setup_texture("objs/ufo/Map__7_Normal_Bump.tga");
 	jet_tex = setup_texture("objs/jet/Paint_tex.jpg");
 	rocks_tex = setup_texture("sandstone_parra/stone-block-wall_albedo.png");
-	rocks_normal = setup_texture("sandstone_parra/stone-block-wall_normal-dx.png");
-	rocks_depth = setup_texture("sandstone_parra/stone-block-wall_depth.png");
-	rocks_rough = setup_texture("sandstone_parra/stone-block-wall_roughness.png");
-	rocks_metal = setup_texture("sandstone_parra/stone-block-wall_metallic.png");
-	rocks_ao = setup_texture("sandstone_parra/stone-block-wall_ao.png");
+	rocks_normal = setup_texture_pbr("sandstone_parra/stone-block-wall_normal-dx.png", false);
+	rocks_depth = setup_texture_pbr("sandstone_parra/stone-block-wall_depth.png", false);
+	rocks_rough = setup_texture_pbr("sandstone_parra/stone-block-wall_roughness.png", false);
+	rocks_metal = setup_texture_pbr("sandstone_parra/stone-block-wall_metallic.png", false);
+	rocks_ao = setup_texture_pbr("sandstone_parra/stone-block-wall_ao.png", false);
+	vase_tex = setup_texture_pbr("objs/vase/T_Flowervase_BC.png", true);
+	vase_normal = setup_texture_pbr("objs/vase/T_Flowervase_N.png", false);
+	vase_metalic = setup_texture_pbr("objs/vase/T_Flowervase_MT.png, false", false);
+	vase_rough = setup_texture_pbr("objs/vase/T_Flowervase_R.png", false);
+	vase_ao = setup_texture_pbr("objs/vase/T_Flowervase_AO.png", false);
 	// Enable blending for transparency
 	glEnable(GL_BLEND);
 	// Specify blend function 
 	// Final colour is combination of source fragment scaled by alpha and destination fragment scaled by 1 - alpha
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	// Texture Unit 0 is used for Shadow Mapping.
-	// Texture Unit 1 is used by the Texture class.
-
-	// Bind to texture units
-
-	// Texture unit 3 - UFO Diffuse
-	glActiveTexture(GL_TEXTURE3); 
-	glBindTexture(GL_TEXTURE_2D, ship_tex);
-
-	// Texture unit 4 - UFO Glow
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, ship_glow);
-
-	// Texture unit 5 - UFO Normal
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, ship_normal);
-
-	// Texture unit 6 - UFO Specular
-	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_2D, ship_specular);
-
-	// Texture unit 7 - UFO Bump
-	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, ship_bump);
-
-	// Texture unit 8 - Sand
-	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_2D, sand_tex);
-
-	// Texture unit 9 - Jet Texture
-	glActiveTexture(GL_TEXTURE9);
-	glBindTexture(GL_TEXTURE_2D, jet_tex);
-
-	//Texture unit 10 - Cubemap
-	glActiveTexture(GL_TEXTURE10);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
-
-	//Texture unit 11 - Rocks Base 
-	glActiveTexture(GL_TEXTURE11);
-	glBindTexture(GL_TEXTURE_2D, rocks_tex);
-
-	//Texture unit 12 - Rocks Diffuse 
-	glActiveTexture(GL_TEXTURE12);
-	glBindTexture(GL_TEXTURE_2D, rocks_normal);
-
-	//Texture unit 13 - Rocks Depth Map 
-	glActiveTexture(GL_TEXTURE13);
-	glBindTexture(GL_TEXTURE_2D, rocks_depth);
-
-	// Texture unit 14 - Rocks Metalic
-	glActiveTexture(GL_TEXTURE14);
-	glBindTexture(GL_TEXTURE_2D, rocks_metal);
-
-	// Texture unit 15 - Rocks AO
-	glActiveTexture(GL_TEXTURE15);
-	glBindTexture(GL_TEXTURE_2D, rocks_ao);
-
-	// Texture unit 16 - Rocks Roughness
-	glActiveTexture(GL_TEXTURE16);
-	glBindTexture(GL_TEXTURE_2D, rocks_rough);
+	
 
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);

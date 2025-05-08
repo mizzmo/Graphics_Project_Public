@@ -93,22 +93,14 @@ void calculateTangentSpace(vertex& v1, vertex& v2, vertex& v3)
 	tangent = glm::normalize(tangent);
 	bitangent = glm::normalize(bitangent);
 
-	// Make sure the tangent is orthogonal to the normal
-	// Gram-Schmidt orthogonalization
 	glm::vec3 normal1 = glm::vec3(v1.nor);
 	glm::vec3 normal2 = glm::vec3(v2.nor);
 	glm::vec3 normal3 = glm::vec3(v3.nor);
 
 	tangent = glm::normalize(tangent - normal1 * glm::dot(normal1, tangent));
 
-	// Now ensure the bitangent is orthogonal to both normal and tangent
-	// (Alternative to using cross product, which can flip the direction)
-	bitangent = glm::normalize(bitangent - normal1 * glm::dot(normal1, bitangent) -
-		tangent * glm::dot(tangent, bitangent));
+	bitangent = glm::normalize(bitangent - normal1 * glm::dot(normal1, bitangent) - tangent * glm::dot(tangent, bitangent));
 
-	// Assign the same tangent and bitangent to all vertices in this triangle
-	// For more accurate results in a full mesh, you would accumulate these per vertex
-	// and normalize at the end
 	v1.tangent = v2.tangent = v3.tangent = tangent;
 	v1.bitangent = v2.bitangent = v3.bitangent = bitangent;
 }
@@ -125,7 +117,7 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 		throw std::runtime_error(warn + err);
 	}
 
-	// Load materials/textures if textures map is provided
+	// Load materials/textures
 	std::map<int, GLuint> mat_to_tex_map; 
 
 	if (textures != nullptr && !materials.empty()) {
@@ -136,9 +128,9 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 			if (!mat.diffuse_texname.empty()) {
 				std::string tex_path = std::string(base_folder) + "/" + mat.diffuse_texname;
 
-				// Check if we've already loaded this texture
+				// Check if already loaded texture
 				if (textures->find(tex_path) == textures->end()) {
-					// Load the texture using your setup_texture function
+					// Load the texture using setup_texture function
 					GLuint tex_id = setup_texture(tex_path.c_str());
 					(*textures)[tex_path] = tex_id;
 				}
@@ -232,7 +224,7 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 				tri.v2 = face_verts[1];
 				tri.v3 = face_verts[2];
 
-				// Calculate tangent and bitangent for this triangle
+				// Calculate tangent and bitangent for triangle
 				calculateTangentSpace(tri.v1, tri.v2, tri.v3);
 
 				tri.reflect = false;

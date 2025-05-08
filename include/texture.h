@@ -69,6 +69,68 @@ GLuint setup_texture(const char* filename)
 	return texObject;
 }
 
+GLuint setup_texture_pbr(const char* filename, bool is_srgb)
+{
+	// Enable textures
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	GLuint texObject;
+	glGenTextures(1, &texObject);
+	glBindTexture(GL_TEXTURE_2D, texObject);
+
+	// Handle how we want the image to fit the screen.
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	// Use mipmapping for better quality
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	int w, h, chan;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* pxls = stbi_load(filename, &w, &h, &chan, 0);
+
+	if (pxls) {
+		// Decide which image format to use.
+		GLenum format;
+		GLenum internalFormat;
+
+		if (chan == 1) {
+			format = GL_RED;
+			internalFormat = GL_R8;
+		}
+		else if (chan == 3) {
+			format = GL_RGB;
+			// Use sRGB for color textures 
+			internalFormat = is_srgb ? GL_SRGB8 : GL_RGB8;
+		}
+		else if (chan == 4) {
+			format = GL_RGBA;
+			internalFormat = is_srgb ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+		}
+		else {
+			std::cerr << "Unsupported number of channels in texture: " << filename << std::endl;
+			stbi_image_free(pxls);
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_BLEND);
+			return 0;
+		}
+
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, GL_UNSIGNED_BYTE, pxls);
+		stbi_image_free(pxls);
+
+		// Generate mipmaps for better quality
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cerr << "Failed to load texture: " << filename << std::endl;
+	}
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	return texObject;
+}
+
 GLuint setup_mipmaps(const char* filename[], int n)
 {
 	// Enable textures

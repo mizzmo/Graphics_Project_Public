@@ -64,6 +64,12 @@ uniform sampler2D metallicMap;
 uniform sampler2D roughnessMap;  
 uniform sampler2D aoMap;        
 
+// Environment Lighting
+// Colour
+uniform vec3 ambientLight; 
+// How bright
+uniform float environmentIntensity;
+
 // Value of Pi
 const float PI = 3.14159265359;
 
@@ -382,16 +388,16 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 }
 
 // Fresnel Equation
-vec3 FresnelSchlick(float cosTheta, vec3 F0)
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
-    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 
 vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float roughnessValue, float aoValue)
 {
     // Surface reflection at zero incidence
-    vec3 F0 = vec3(0.04); 
+    vec3 F0 = vec3(0.04, 0.04, 0.04);
     F0 = mix(F0, albedoValue, metallicValue); 
     
     // Outgoing radiance
@@ -410,12 +416,12 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
     vec3 radiance = lightColour;
         
     // Calculate shadows
-    float shadow = shadowOnFragment(FragPosProjectedLightSpace) * 0.8;
+    float shadow = shadowOnFragment(FragPosProjectedLightSpace) * 0.5;
         
     // Calculate BRDF
     float NDF = DistributionGGX(N, H, roughnessValue);
     float G = GeometrySmith(N, V, L, roughnessValue);
-    vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+    vec3 F = FresnelSchlickRoughness(max(dot(H, V), 0.0), F0, roughnessValue);
         
     // Specular component
     vec3 numerator = NDF * G * F;
@@ -469,7 +475,7 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
             // Calculate BRDF
             float NDF = DistributionGGX(N, H, roughnessValue);
             float G = GeometrySmith(N, V, L, roughnessValue);
-            vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+            vec3 F = FresnelSchlickRoughness(max(dot(H, V), 0.0), F0, roughnessValue);
             
             // Calculate specular component
             vec3 numerator = NDF * G * F;
@@ -494,9 +500,15 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
     vec3 color = ambient + Lo;
     
     // HDR tonemapping
-    color = color / (color + vec3(1.f));
+    float exposure = 1.5;
+    vec3 mapped = vec3(1.0) - exp(-color * exposure);
+    
+    // Adjust brightness based on metallic value
+    float brightnessFactor = mix(1.0, 2.0, metallicValue * (1.0 - roughnessValue));
+    mapped *= brightnessFactor;
+    
     // Gamma correction
-    color = pow(color, vec3(1.0/2.2));
+    color = pow(mapped, vec3(1.0/2.2));
     
     return color;
 }
@@ -542,15 +554,27 @@ void main()
         float metallicValue;
         float roughnessValue;
         float aoValue;
-        
-        // Sample textures
-        albedoValue = texture(albedoMap, scaledTexCoords).rgb;
-        metallicValue = texture(metallicMap, scaledTexCoords).r;
-        roughnessValue = texture(roughnessMap, scaledTexCoords).g;
-        aoValue = texture(aoMap, scaledTexCoords).b;
+    
+        // Ensure scaled coordinates are correct for PBR
+        vec2 pbrTexCoords = currentTexCoords * uv_scale;
+    
+        // Sample textures with the proper scaling
+        albedoValue = texture(albedoMap, pbrTexCoords).rgb;
+        metallicValue = texture(metallicMap, pbrTexCoords).r;
+        roughnessValue = texture(roughnessMap, pbrTexCoords).r;
+        aoValue = texture(aoMap, pbrTexCoords).r;
         
         // Calculate lighting using PBR
         vec3 pbrColor = CalculatePBR(N, V, albedoValue, metallicValue, roughnessValue, aoValue);
+
+        // Simulate environmental lighting for better reflections
+        vec3 ambient = vec3(0.03) * albedoValue * aoValue;
+
+        vec3 reflectDir = reflect(-V, N);
+        vec3 envReflection = ambientLight * environmentIntensity;
+
+        float reflectionStrength = (1.0 - roughnessValue) * mix(0.2, 1.0, metallicValue);
+        ambient += envReflection * reflectionStrength * albedoValue;
         
         finalColor = vec4(pbrColor, 1.0);
     } else {
