@@ -68,6 +68,9 @@
     <ClInclude Include="interactivity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="tangent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lighting_vertex.vert">

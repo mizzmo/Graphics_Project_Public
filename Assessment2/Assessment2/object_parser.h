@@ -285,6 +285,7 @@ vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles, bool use
 			tri_array.push_back(v.nor.x);
 			tri_array.push_back(v.nor.y);
 			tri_array.push_back(v.nor.z);
+			// For objects that use normal mapping.
 			if (uses_normal) {
 				// Tangent
 				tri_array.push_back(v.tangent.x);

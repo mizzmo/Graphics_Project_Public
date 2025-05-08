@@ -17,6 +17,7 @@
 #include "cylinder.h"
 #include "casteljau.h"
 #include "interactivity.h"
+#include "tangent.h"
 
 
 // useful for picking colours
@@ -78,14 +79,16 @@ std::vector<GLfloat> cylinder;
 std::vector<GLfloat> jet_array;
 std::vector<GLfloat> desert_dunes;
 std::vector<GLfloat> shooting_star;
-std::vector<GLfloat> sphinx_array;
+std::vector<GLfloat> rock_array;
 
 // Textures for UFO
 std::vector<GLuint> ufo_texture_ids;
 // Textures for Jet
 std::vector<GLuint> jet_texture_ids;
 
-GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex, sphinx_tex, sphinx_displace;
+std::vector<GLuint> rock_texture_ids;
+
+GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex, rocks_tex, rocks_normal, rocks_height;
 
 
 // Copy of matrices used by UFO
@@ -388,20 +391,33 @@ void initialise_buffers() {
 	glCreateBuffers(NUM_VBO, VBOs);
 	// Bind VBO 0 (for the triangle vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+
+	// Generate the tangent and bitangent vectors
+	std::vector<GLfloat> finalVertexData;
+	// Work out number of triangles in the shape
+	size_t numVertices = sizeof(double_pyramid_vertices) / sizeof(GLfloat) / floatsPerInputVertex;
+	generateTangentsAndBitangents(double_pyramid_vertices, numVertices, finalVertexData);
+
 	// Store vertices in VBO
-	glBufferData(GL_ARRAY_BUFFER, sizeof(double_pyramid_vertices), double_pyramid_vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, finalVertexData.size() * sizeof(GLfloat), finalVertexData.data(), GL_STATIC_DRAW);
 	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// Colour attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	// Texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 	// Normal attribute
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(8 * sizeof(float)));
 	glEnableVertexAttribArray(3);
+	// Tangent attribute 
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(11 * sizeof(float)));
+	glEnableVertexAttribArray(4);
+	// Bitangent attribute
+	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(14 * sizeof(float)));
+	glEnableVertexAttribArray(5);
 
 
 	//  ---------- UFO ----------
@@ -590,37 +606,50 @@ void initialise_buffers() {
 	glEnableVertexAttribArray(0);
 
 
-	// ---- SPHINX ----
+	// ---- ROCKS ----
 	// Configure VAO 7 
 	glBindVertexArray(VAOs[8]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[8]);
 
 	// Create a texture map to store textures
-	std::map<std::string, GLuint> sphinx_textures;
+	std::map<std::string, GLuint> rock_textures;
 
 	// Load an Object with textures
-	std::vector<triangle> sphinx_triangles;
+	std::vector<triangle> rock_triangles;
 	// Specify the base folder path
-	obj_path = "objs/sphinx/Abolhole.obj";
-	base_path = "objs/sphinx";
-	num_triangles = obj_parse(obj_path.c_str(), &sphinx_triangles, base_path.c_str(), &sphinx_textures);
+	obj_path = "objs/egypt/source/test.obj";
+	base_path = "objs/egypt/source";
+	num_triangles = obj_parse(obj_path.c_str(), &rock_triangles, base_path.c_str(), &rock_textures);
 
 	// Convert to array of floats
-	sphinx_array = tri_to_fl_array(sphinx_triangles, false);
+	rock_array = tri_to_fl_array(rock_triangles, true);
 	// Upload the vertex data to the VBO
-	glBufferData(GL_ARRAY_BUFFER, sphinx_array.size() * sizeof(GLfloat), sphinx_array.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, rock_array.size() * sizeof(GLfloat), rock_array.data(), GL_STATIC_DRAW);
 	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// Colour attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	// Texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 	// Normal attribute
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(8 * sizeof(float)));
 	glEnableVertexAttribArray(3);
+	// Tangent attribute 
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(11 * sizeof(float)));
+	glEnableVertexAttribArray(4);
+	// Bitangent attribute 
+	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(14 * sizeof(float)));
+	glEnableVertexAttribArray(5);
+
+	// Store texture IDs for rendering
+	for (const auto& triangle : rock_triangles) {
+		if (triangle.texID > 0 && std::find(rock_texture_ids.begin(), rock_texture_ids.end(), triangle.texID) == rock_texture_ids.end()) {
+			rock_texture_ids.push_back(triangle.texID);
+		}
+	}
 
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -926,19 +955,19 @@ void draw_skybox(unsigned int program) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-void draw_sphinx(unsigned int program) {
+void draw_rocks(unsigned int program) {
 	glBindVertexArray(VAOs[8]);
 	glm::mat4 model = glm::mat4(1.0f);
 
 	// Apply transformations
-	model = glm::translate(model, glm::vec3(5.f, 1.f, 8.f));
-	model = glm::rotate(model, glm::radians(-160.f), glm::vec3(0.f, 1.f, 0.f));
-	model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+	model = glm::translate(model, glm::vec3(3.f, 1.1f, 4.f));
+	model = glm::rotate(model, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
+	model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
 	
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 
-	int num_object_vertices = sphinx_array.size() / 11;
+	int num_object_vertices = rock_array.size() / 11;
 	// Draw the Sphinx
 	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 }
@@ -964,7 +993,7 @@ void generate_depth_map(unsigned int shadowShaderProgram, ShadowStruct shadow, g
 	draw_ufo(shadowShaderProgram);
 	draw_dunes(shadowShaderProgram);
 	draw_jet(shadowShaderProgram);
-	draw_sphinx(shadowShaderProgram);
+	draw_rocks(shadowShaderProgram);
 	// Unbind the framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -982,9 +1011,6 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glBindTexture(GL_TEXTURE_2D, shadow.Texture);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "shadowMap"), 0);
 
-	// Activate brick texture in texture unit 2
-	glActiveTexture(GL_TEXTURE2);
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 2);
 
 	// For the regular objects, set to false
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_specular"), false);
@@ -1029,6 +1055,9 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "spotLightInnerCutoff"), 45.f);
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "spotLightOuterCutoff"), 45.f);
 
+	// Initial texture scale
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 1.0f);
+
 	view = glm::mat4(1.f);
 	view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
 	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -1037,7 +1066,33 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	projection = glm::perspective(glm::radians(fov), (float)width / (float)height, .01f, 100.f);
 	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
+
+	// --- PYRAMID ---
+	glActiveTexture(GL_TEXTURE11);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 11);
+
+	// Normal Map
+	glActiveTexture(GL_TEXTURE12);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "normal_map"), 12);
+
+	// Depth Map
+	glActiveTexture(GL_TEXTURE13);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "depth_map"), 13);
+
+	// Height for parrallax mapping
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "height_scale"), 0.2f);
+
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_parrallax"), true);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), true);
+
+	// Increase texture scale
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 3.0f);
+
 	draw_pyramid(renderShaderProgram);
+
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_parrallax"), false);
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 1.0f);
+
 
 	// ---- Flat Plane ----
 	// Activate sand texture in texture unit 8
@@ -1071,13 +1126,31 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	draw_jet(renderShaderProgram);
 
 
-	// ---- Sphinx ----
+	// ---- ROCKS ----
+	// Base texture
 	glActiveTexture(GL_TEXTURE11);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 11);
-	//glActiveTexture(GL_TEXTURE12);
-	//glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 11);
 
-	draw_sphinx(renderShaderProgram);
+	// Normal Map
+	glActiveTexture(GL_TEXTURE12);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "normal_map"), 12);
+
+	// Depth Map
+	glActiveTexture(GL_TEXTURE13);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "depth_map"), 13);
+
+	// Increase texture scale
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 25.0f);
+
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), true);
+
+
+	draw_rocks(renderShaderProgram);
+
+	// Reset texture scale
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 1.0f);
+
+
 
 	
 
@@ -1208,8 +1281,9 @@ int main() {
 	ship_specular = setup_texture("objs/ufo/ufo_spec.png");
 	ship_bump = setup_texture("objs/ufo/Map__7_Normal_Bump.tga");
 	jet_tex = setup_texture("objs/jet/Paint_tex.jpg");
-	sphinx_tex = setup_texture("objs/sphinx/sandstone_diffuse.jpg");
-	sphinx_displace = setup_texture("objs/sphinx/sandstone_diffuse.jpg");
+	rocks_tex = setup_texture("sandstone_parra/stone-block-wall_albedo.png");
+	rocks_normal = setup_texture("sandstone_parra/stone-block-wall_normal-dx.png");
+	rocks_height = setup_texture("sandstone_parra/stone-block-wall_height.png");
 	// Enable blending for transparency
 	glEnable(GL_BLEND);
 	// Specify blend function 
@@ -1256,13 +1330,17 @@ int main() {
 	glActiveTexture(GL_TEXTURE10);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
 
-	//Texture unit 11 - Sphinx Base 
+	//Texture unit 11 - Rocks Base 
 	glActiveTexture(GL_TEXTURE11);
-	glBindTexture(GL_TEXTURE_2D, sphinx_tex);
+	glBindTexture(GL_TEXTURE_2D, rocks_tex);
 
-	//Texture unit 12 - Sphinx Diffuse 
+	//Texture unit 12 - Rocks Diffuse 
 	glActiveTexture(GL_TEXTURE12);
-	glBindTexture(GL_TEXTURE_2D, sphinx_displace);
+	glBindTexture(GL_TEXTURE_2D, rocks_normal);
+
+	//Texture unit 13 - Rocks Depth Map 
+	glActiveTexture(GL_TEXTURE13);
+	glBindTexture(GL_TEXTURE_2D, rocks_height);
 
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);

@@ -10,8 +10,11 @@ in vec4 FragPosProjectedLightSpace;
 
 uniform float shininess;
 
+// Tangent Space
 in mat3 TBN;
 
+// Texture Scaling
+uniform float uv_scale;
 
 // Shadows
 uniform sampler2D shadowMap;
@@ -47,14 +50,24 @@ uniform sampler2D normal_map;
 uniform sampler2D specular_map;
 uniform sampler2D bump_map;
 
+// Parallax Mapping
+uniform sampler2D depth_map;
+uniform float height_scale;
+uniform bool uses_parrallax;
+
+// Get scaled texture coordinates
+vec2 getScaledTexCoords() {
+    return texCoords * uv_scale;
+}
 
 // ---- Normal Map ----
 vec3 calculateNormalFromMap() {
     if (!uses_normal) {
         return normalize(nor);
     }
-    // Sample the normal map 
-    vec3 normalColor = texture(normal_map, texCoords).rgb;
+    // Sample the normal map with scaled coordinates
+    vec2 scaledCoords = getScaledTexCoords();
+    vec3 normalColor = texture(normal_map, scaledCoords).rgb;
     
     // Transform from [0,1] range to [-1,1] range
     vec3 normalTangentSpace = normalize(normalColor * 2.0 - 1.0);
@@ -69,14 +82,108 @@ float calculateSpecular(vec3 normal, vec3 viewDir, vec3 lightDir) {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     
     if (uses_specular) {
-        // Sample from specular map
-        float specularStrength = texture(specular_map, texCoords).r;
+        // Sample from specular map with scaled coordinates
+        vec2 scaledCoords = getScaledTexCoords();
+        float specularStrength = texture(specular_map, scaledCoords).r;
         return spec * specularStrength;
     }
     
     // Default specular intensity if no specular map is used
     return spec * 0.5;
 }
+
+
+// --- Parallax Mapping ---
+// --- Improved Parallax Occlusion Mapping ---
+vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTangent)
+{
+    // Use scaled texture coordinates as input
+    vec2 scaledCoords = texCoords * uv_scale;
+    
+    // Adjust view direction for height scale (controls parallax strength)
+    vec2 P = viewDirTangent.xy * height_scale / viewDirTangent.z;
+    
+    // Determine number of layers dynamically based on view angle
+    // More layers when looking at grazing angles, fewer when looking straight on
+    const float minLayers = 8.0;
+    const float maxLayers = 32.0;
+    float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDirTangent)));
+    
+    // Calculate the size of each layer
+    float layerDepth = 1.0 / numLayers;
+    
+    // Current layer depth
+    float currentLayerDepth = 0.0;
+    
+    // Calculate the texture coordinate delta per layer
+    vec2 deltaTexCoords = P / numLayers;
+    
+    // Initialize values
+    vec2 currentTexCoords = scaledCoords;
+    float currentDepthMapValue = texture(depth_map, currentTexCoords).r;
+    
+    // Loop until we find where ray intersects heightmap
+    while(currentLayerDepth < currentDepthMapValue)
+    {
+        // Shift to next layer
+        currentTexCoords -= deltaTexCoords;
+        currentDepthMapValue = texture(depth_map, currentTexCoords).r;
+        currentLayerDepth += layerDepth;
+        
+        // Safety check to prevent infinite loops
+        if(currentLayerDepth > 1.0) break;
+    }
+    
+    // ---- Parallax Occlusion Mapping refinement step ----
+    // Get previous texture coordinates
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+    
+    // Get depth values for linear interpolation
+    float afterDepth = currentDepthMapValue - currentLayerDepth;
+    float beforeDepth = texture(depth_map, prevTexCoords).r - (currentLayerDepth - layerDepth);
+    
+    // Calculate interpolation weight
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    
+    // Interpolate between the two closest points
+    vec2 finalTexCoords = mix(currentTexCoords, prevTexCoords, weight);
+    
+    // Return coordinates in unscaled space
+    return finalTexCoords / uv_scale;
+}
+
+// Compute Normal Using Parallax Mapping
+vec3 ParallaxMappedNormal()
+{   
+    if(!uses_parrallax) {
+        return normalize(nor);
+    }
+    
+    // Transform positions into tangent space
+    vec3 TangentLightPos = TBN * lightPos;
+    vec3 TangentViewPos  = TBN * camPos;
+    vec3 TangentFragPos  = TBN * FragPosWorldSpace;
+
+    // Compute view direction in tangent space
+    vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
+
+    // Offset texture coordinates using parallax mapping
+    vec2 parallaxCoords = ParallaxOcclusionMapping(texCoords, viewDir);
+
+    // Clamp coordinates to avoid artifacts at edges
+    parallaxCoords = clamp(parallaxCoords, 0.0, 1.0);
+
+    // Apply scaling for normal map lookup
+    vec2 scaledParallaxCoords = parallaxCoords * uv_scale;
+    
+    // Sample normal map using the offset coordinates
+    vec3 normalColor = texture(normal_map, scaledParallaxCoords).rgb;
+    vec3 normalTangentSpace = normalize(normalColor * 2.0 - 1.0);
+    
+    // Transform back to world space 
+    return normalize(TBN * normalTangentSpace);
+}
+
 
 // ---- Shadows ----
 float shadowOnFragment(vec4 FragPosProjectedLightSpace) {
@@ -124,6 +231,9 @@ vec3 CalculateDirectionalIllumination() {
     if (uses_normal) {
         Nnor = calculateNormalFromMap();
     }
+    if(uses_parrallax){
+        Nnor = ParallaxMappedNormal();
+    }
 
     // Directional light vector
     vec3 NLightDirection = normalize(-lightDirection); 
@@ -164,6 +274,9 @@ vec3 CalculateSpotIllumination() {
     // Normal or Bump mapping
     if (uses_normal) {
         Nnor = calculateNormalFromMap();
+    }
+    if(uses_parrallax){
+        Nnor = ParallaxMappedNormal();
     }
 
     vec3 totalLight = vec3(0.0);
@@ -230,7 +343,9 @@ vec3 CalculateSpotIllumination() {
 // Apply glow map to any color
 vec4 applyGlowMap(vec4 baseColor) {
     if (uses_glow) {
-        vec4 glowColor = texture(glow_map, texCoords);
+        // Use scaled coordinates for glow map
+        vec2 scaledCoords = getScaledTexCoords();
+        vec4 glowColor = texture(glow_map, scaledCoords);
         // Intensity of glow
         float intensity = 0.4f;
         return clamp(baseColor + glowColor * intensity, 0.0, 1.0);
@@ -240,8 +355,6 @@ vec4 applyGlowMap(vec4 baseColor) {
 
 void main()
 {
-
-    
     // Calculate light contributions
     vec3 dirLightColor = CalculateDirectionalIllumination();
     vec3 spotLightColor = CalculateSpotIllumination(); 
@@ -251,7 +364,9 @@ void main()
     
     // Apply to base color
     if (uses_texture) {
-        vec4 texColor = texture(tex0, texCoords);
+        // Scale texture coordinates
+        vec2 scaledTexCoords = getScaledTexCoords();
+        vec4 texColor = texture(tex0, scaledTexCoords);
         // Apply lighting to texture color
         vec4 litColor = vec4(finalLightColor * texColor.rgb, texColor.a);
         // Apply glow effect

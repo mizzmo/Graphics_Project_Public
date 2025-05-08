@@ -151,6 +151,7 @@
     <ClInclude Include="interactivity.h" />
     <ClInclude Include="object_parser.h" />
     <ClInclude Include="plane.h" />
+    <ClInclude Include="tangent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="lighting_fragment.frag" />
