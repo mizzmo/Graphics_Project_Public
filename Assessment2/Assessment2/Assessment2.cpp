@@ -102,8 +102,8 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // Number of VAO and VBOs to create and use
-#define NUM_VBO 10
-#define NUM_VAO 10
+#define NUM_VBO 13
+#define NUM_VAO 13
 GLuint VAOs[NUM_VAO];
 GLuint VBOs[NUM_VBO];
 
@@ -201,6 +201,40 @@ GLfloat cube_vertices[] = {
 	-1.0f, -1.0f,  1.0f,
 	 1.0f, -1.0f,  1.0f
 };
+
+GLfloat redSquare[] = {
+	// Triangle 1
+	-1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	-1.0f, -1.0f, 0.0f,   1.0f, 0.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	 1.0f, -1.0f, 0.0f,   1.0f, 0.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	 // Triangle 2
+	 -1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	  1.0f, -1.0f, 0.0f,   1.0f, 0.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	  1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f
+};
+
+GLfloat greenSquare[] = {
+	// Triangle 1
+	-1.0f,  1.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	-1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	 1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	 // Triangle 2
+	 -1.0f,  1.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	  1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	  1.0f,  1.0f, 0.0f,   0.0f, 1.0f, 0.0f, 0.5f,   0.0f, 0.0f, 1.0f
+};
+
+GLfloat blueSquare[] = {
+	// Triangle 1
+	-1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	-1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	 1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	 // Triangle 2
+	 -1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	  1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+	  1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 1.0f, 0.5f,   0.0f, 0.0f, 1.0f
+};
+
 
 // Function to handle key input
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -651,6 +685,60 @@ void initialise_buffers() {
 	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(14 * sizeof(float)));
 	glEnableVertexAttribArray(5);
 
+	// ---- RED SQUARE ----
+	glBindVertexArray(VAOs[10]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[10]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(redSquare), redSquare, GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Color attribute
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// Normal attribute
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(7 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+
+	// ---- GREEN SQUARE ----
+	glBindVertexArray(VAOs[11]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[11]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(greenSquare), greenSquare, GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Color attribute
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// Normal attribute
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(7 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+
+	// ---- BLUE SQUARE ----
+	glBindVertexArray(VAOs[12]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[12]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(blueSquare), blueSquare, GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Color attribute
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// Normal attribute
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(7 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -984,6 +1072,38 @@ void draw_vase(unsigned int program) {
 	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
 }
 
+void draw_squares(unsigned int program) {
+	glDepthMask(GL_FALSE);
+	// Red Square
+	glBindVertexArray(VAOs[10]);
+	glm::mat4 modelRed = glm::mat4(1.0f);
+	modelRed = glm::translate(modelRed, glm::vec3(2.f, 0.8f, 3.f));
+	modelRed = glm::rotate(modelRed, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelRed));
+	int numRedVertices = sizeof(redSquare) / (10 * sizeof(float));
+	glDrawArrays(GL_TRIANGLES, 0, numRedVertices);
+
+	// Green Square
+	glBindVertexArray(VAOs[11]);
+	glm::mat4 modelGreen = glm::mat4(1.0f);
+	modelGreen = glm::translate(modelGreen, glm::vec3(3.3f, 0.8f, 4.3f));
+	modelGreen =  glm::rotate(modelGreen, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelGreen));
+	int numGreenVertices = sizeof(greenSquare) / (10 * sizeof(float));
+	glDrawArrays(GL_TRIANGLES, 0, numGreenVertices);
+
+	// Blue Square
+	glBindVertexArray(VAOs[12]);
+	glm::mat4 modelBlue = glm::mat4(1.0f);
+	modelBlue = glm::translate(modelBlue, glm::vec3(4.1f, 0.8f, 5.1f));
+	modelBlue = glm::rotate(modelBlue, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelBlue));
+	int numBlueVertices = sizeof(blueSquare) / (10 * sizeof(float));
+	glDrawArrays(GL_TRIANGLES, 0, numBlueVertices);
+
+	glDepthMask(GL_TRUE);
+}
+
 void generate_depth_map(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
 	// Set the viewport to the size of the shadow map
 	glViewport(0, 0, SH_MAP_WIDTH, SH_MAP_HEIGHT);
@@ -1162,19 +1282,6 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
 
 
-
-	// --- CYLINDER ---
-	// Deactivate textures
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), false);
-	// Very shiny for beam
-	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), 512.f);
-	draw_beam(renderShaderProgram);
-	// Re-activate textures
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);
-	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
-
-
-
 	// ---- JET PLANE ----
 	// Texture unit 9 - Jet Texture
 	glActiveTexture(GL_TEXTURE9);
@@ -1316,6 +1423,26 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), 256.f);
 
 	draw_ufo(renderShaderProgram);
+
+	// --- CYLINDER ---
+	// Deactivate textures
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_glow"), false);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), false);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_specular"), false);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), false);
+	// Very shiny for beam
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), 512.f);
+	draw_beam(renderShaderProgram);
+	// Re-activate textures
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
+
+	// ---- SQUARES ----
+	// Draw last for transparency
+	
+
+	draw_squares(renderShaderProgram);
+
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);
 
 }
 
