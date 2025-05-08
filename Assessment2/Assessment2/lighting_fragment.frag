@@ -28,10 +28,16 @@ uniform vec3 camPos;
 // Spot Lighting
 #define NUM_SPOTS 4
 uniform vec3 spotLightDirections[NUM_SPOTS];
-uniform vec3 spotLightColour;
+uniform vec3 spotColour;
 uniform vec3 spotLightPos;
 uniform float spotLightInnerCutoff; 
 uniform float spotLightOuterCutoff; 
+
+
+// Positional Lighting
+uniform bool posActive;
+uniform vec3 posColour;
+uniform vec3 posLightPos;
 
 // Texture 
 in vec2 texCoords;
@@ -57,7 +63,7 @@ uniform bool uses_parrallax;
 
 // PBR Textures
 uniform bool uses_pbr;
-// Base color texture
+// Base Colour texture
 uniform sampler2D albedoMap;     
 // Additional Textures for details
 uniform sampler2D metallicMap; 
@@ -85,10 +91,10 @@ vec3 calculateNormalFromMap() {
     }
     // Sample the normal map with scaled coordinates
     vec2 scaledCoords = getScaledTexCoords();
-    vec3 normalColor = texture(normal_map, scaledCoords).rgb;
+    vec3 normalColour = texture(normal_map, scaledCoords).rgb;
     
     // Transform from [0,1] range to [-1,1] range
-    vec3 normalTangentSpace = normalize(normalColor * 2.0 - 1.0);
+    vec3 normalTangentSpace = normalize(normalColour * 2.0 - 1.0);
     
     return normalize(TBN * normalTangentSpace);
 }
@@ -195,8 +201,8 @@ vec3 ParallaxMappedNormal()
     vec2 scaledParallaxCoords = parallaxCoords * uv_scale;
     
     // Sample normal map using the offset coordinates
-    vec3 normalColor = texture(normal_map, scaledParallaxCoords).rgb;
-    vec3 normalTangentSpace = normalize(normalColor * 2.0 - 1.0);
+    vec3 normalColour = texture(normal_map, scaledParallaxCoords).rgb;
+    vec3 normalTangentSpace = normalize(normalColour * 2.0 - 1.0);
     
     // Transform back to world space 
     return normalize(TBN * normalTangentSpace);
@@ -276,7 +282,7 @@ vec3 CalculateDirectionalIllumination(vec3 Nnor, vec3 viewDir) {
     return lightColour * (ambient + diffuseIntensity + specularIntensity);
 }
 
-// ---- Spot Illumination ----
+// ---- Blinn-Phong Spot Illumination ----
 vec3 CalculateSpotIllumination(vec3 Nnor, vec3 viewDir) {
    
     vec3 totalLight = vec3(0.0);
@@ -331,24 +337,59 @@ vec3 CalculateSpotIllumination(vec3 Nnor, vec3 viewDir) {
             float specular = iSpec * intensity;
 
             // Accumulate light contribution from this spotlight
-            totalLight += spotLightColour * (ambient + (diffuse + specular) * attenuation);
+            totalLight += spotColour * (ambient + (diffuse + specular) * attenuation);
         }
     }
 
     return totalLight;
 }
 
-// Apply glow map to any color
-vec4 applyGlowMap(vec4 baseColor) {
+// ---- Blinn-Phong Positional Lighting ----
+vec3 CalculatePositionalIllumination(vec3 Nnor, vec3 viewDir) {
+
+    vec3 totalLight = vec3(0.0);
+
+    if(posActive){
+
+        // Direction from fragment to light position
+        vec3 lightDir = normalize(posLightPos - FragPosWorldSpace);
+
+        // Diffuse term
+        float iDiff = max(dot(Nnor, lightDir), 0.0);
+
+        // --- Blinn-Phong  ---
+        // Halfway vector for specular
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float iSpec = pow(max(dot(Nnor, halfwayDir), 0.0), shininess); 
+
+        // Distance-based attenuation
+        float distance = length(posLightPos - FragPosWorldSpace);
+        float attenuation = 1.0 / (1.0 + 0.05 * distance + 0.0002 * distance * distance);
+
+        // Lighting components
+        float ambient = 0.1;
+        float diffuse = iDiff;
+        float specular = iSpec;
+
+        // Accumulate lighting result
+        totalLight += posColour * (ambient + (diffuse + specular) * attenuation);
+    }
+
+    return totalLight;
+}
+
+
+// Apply glow map to any Colour
+vec4 applyGlowMap(vec4 baseColour) {
     if (uses_glow) {
         // Use scaled coordinates for glow map
         vec2 scaledCoords = getScaledTexCoords();
-        vec4 glowColor = texture(glow_map, scaledCoords);
+        vec4 glowColour = texture(glow_map, scaledCoords);
         // Intensity of glow
         float intensity = 0.4f;
-        return clamp(baseColor + glowColor * intensity, 0.0, 1.0);
+        return clamp(baseColour + glowColour * intensity, 0.0, 1.0);
     }
-    return baseColor;
+    return baseColour;
 }
 
 
@@ -470,7 +511,7 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
             // Calculate light attenuation 
             float distance = length(spotLightPos - FragPosWorldSpace);
             float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-            vec3 radiance = spotLightColour * attenuation * intensity;
+            vec3 radiance = spotColour * attenuation * intensity;
             
             // Calculate BRDF
             float NDF = DistributionGGX(N, H, roughnessValue);
@@ -491,26 +532,49 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
             float NdotL = max(dot(N, L), 0.0);
             Lo += (kD * albedoValue / PI + specular) * radiance * NdotL;
         }
-    }
+
+    // --- Positional Light Contribution ---
+    if(posActive){
+
+        float distance = length(posLightPos - FragPosWorldSpace);
+        float attenuation = 1.0 / (1.0 + 0.05 * distance + 0.0002 * distance * distance);
+        vec3 radiance = posColour * attenuation;
+
+        float NDF = DistributionGGX(N, H, roughnessValue);
+        float G = GeometrySmith(N, V, L, roughnessValue);
+        vec3 F = FresnelSchlickRoughness(max(dot(H, V), 0.0), F0, roughnessValue);
+    
+        vec3 numerator = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+        vec3 specular = numerator / denominator;
+    
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallicValue;
+    
+        float NdotL = max(dot(N, L), 0.0);
+        Lo += (kD * albedoValue / PI + specular) * radiance * NdotL;
+        }
+     }
     
     // Ambient lighting
     vec3 ambient = vec3(0.1) * albedoValue * aoValue;
     
-    // Final color with ambient
-    vec3 color = ambient + Lo;
+    // Final Colour with ambient
+    vec3 Colour = ambient + Lo;
     
     // HDR tonemapping
     float exposure = 1.5;
-    vec3 mapped = vec3(1.0) - exp(-color * exposure);
+    vec3 mapped = vec3(1.0) - exp(-Colour * exposure);
     
     // Adjust brightness based on metallic value
     float brightnessFactor = mix(1.0, 2.0, metallicValue * (1.0 - roughnessValue));
     mapped *= brightnessFactor;
     
     // Gamma correction
-    color = pow(mapped, vec3(1.0/2.2));
+    Colour = pow(mapped, vec3(1.0/2.2));
     
-    return color;
+    return Colour;
 }
 
 void main()
@@ -545,7 +609,7 @@ void main()
     // Apply UV scaling for texture size 
     vec2 scaledTexCoords = currentTexCoords * uv_scale;
     
-    vec4 finalColor;
+    vec4 finalColour;
     
     // PBR
     if (uses_pbr) {
@@ -565,7 +629,7 @@ void main()
         aoValue = texture(aoMap, pbrTexCoords).r;
         
         // Calculate lighting using PBR
-        vec3 pbrColor = CalculatePBR(N, V, albedoValue, metallicValue, roughnessValue, aoValue);
+        vec3 pbrColour = CalculatePBR(N, V, albedoValue, metallicValue, roughnessValue, aoValue);
 
         // Simulate environmental lighting for better reflections
         vec3 ambient = vec3(0.03) * albedoValue * aoValue;
@@ -576,23 +640,24 @@ void main()
         float reflectionStrength = (1.0 - roughnessValue) * mix(0.2, 1.0, metallicValue);
         ambient += envReflection * reflectionStrength * albedoValue;
         
-        finalColor = vec4(pbrColor, 1.0);
+        finalColour = vec4(pbrColour, 1.0);
     } else {
         // Use the non-PBR lighting
-        vec3 dirLightColor = CalculateDirectionalIllumination(N, V);
-        vec3 spotLightColor = CalculateSpotIllumination(N, V); 
+        vec3 dirLightColour = CalculateDirectionalIllumination(N, V);
+        vec3 spotLightColour = CalculateSpotIllumination(N, V); 
+        vec3 posLightColour = CalculatePositionalIllumination(N, V);
+
+        // Combine all light sources
+        vec3 finalLightColour = dirLightColour + spotLightColour + posLightColour;
         
-        // Combine both light sources
-        vec3 finalLightColor = dirLightColor + spotLightColor;
-        
-        // Apply to base color
+        // Apply to base Colour
         if (uses_texture) {
-            vec4 texColor = texture(tex0, scaledTexCoords);
-            finalColor = vec4(finalLightColor * texColor.rgb, texColor.a);
+            vec4 texColour = texture(tex0, scaledTexCoords);
+            finalColour = vec4(finalLightColour * texColour.rgb, texColour.a);
         } else {
-            finalColor = vec4(finalLightColor * colour.rgb, colour.a);
+            finalColour = vec4(finalLightColour * colour.rgb, colour.a);
         }
     }
     
-    fColour = finalColor;
+    fColour = finalColour;
 }

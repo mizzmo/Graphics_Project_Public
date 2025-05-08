@@ -21,12 +21,12 @@
 
 
 // useful for picking colours
-// https://keiwando.com/color-picker/
+// https://keiwando.com/Colour-picker/
 
 
 
-unsigned int width = 800;
-unsigned int height = 600; 
+unsigned int width = 1000;
+unsigned int height = 800;
 float fov = 45.f;
 
 // Interactive Cameras
@@ -50,7 +50,7 @@ SCamera* activeCamera = &Model_Viewer_Camera;
 // Radius of the cam orbit
 float orbit_radius = 10.0f;
 // Speed of orbit
-float orbit_speed = 0.00005f; 
+float orbit_speed = 0.00005f;
 // Center of the orbit
 glm::vec3 orbit_center(0.0f, 0.0f, 0.0f);
 
@@ -67,6 +67,11 @@ glm::vec3 lightPos = glm::vec3(10.f, 9.f, -9.f);
 #define NUM_SPOTLIGHTS 4
 glm::vec3 spotLightDirections[NUM_SPOTLIGHTS];
 glm::vec3 spotLightPos = glm::vec3(0.f, 1.f, 0.f);
+
+// Positional Light
+glm::vec3 posLightPos = glm::vec3(0.f, 2.f, 0.f);
+glm::vec3 posLightColour = glm::vec3(0.f, 0.5f, 0.f);
+
 
 // Shadows
 #define SH_MAP_WIDTH 2048
@@ -105,8 +110,8 @@ float lastX = 800.0f / 2.0f;
 float lastY = 600.0f / 2.0f;
 bool firstMouse = true;
 // Difference in time between frames
-float deltaTime = 0.0f; 
-float lastFrame = 0.0f; 
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 
 #define NUM_VBO 10
@@ -168,6 +173,7 @@ GLfloat double_pyramid_vertices[] = {
 	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f,		0.0f, 1.0f,		0.f, -1.f, 1.f,		//v3
 };
 
+// Cube for Skybox cubemap
 GLfloat cube_vertices[] = {
 	-1.0f,  1.0f, -1.0f,
 	-1.0f, -1.0f, -1.0f,
@@ -222,11 +228,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 		lightDirection = activeCamera->Front;
 	}
-		
-	
+
+
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 		// Switch between cameras
-		if (current_camera+1 == num_cameras) {
+		if (current_camera + 1 == num_cameras) {
 			// Loop back to start if on last camera
 			current_camera = 0;
 		}
@@ -294,21 +300,20 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS)
 			orbit_speed -= 0.001f;
 	}
-	
+
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		// Where the UFO is in the scene
-		glm::vec3 ship_pos = glm::vec3(0.f, 3.f, 0.f);
+		// Origin of click sphere
+		glm::vec3 origin = glm::vec3(0.f, 3.f, 0.f);
 
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
 		glm::vec3 rayDir = screenToWorldRay(xpos, ypos, width, height, projection, view);
 		// Radius of detection
-		float pickRadius = 1.5f; 
-		if (rayIntersectsSphere(activeCamera->Position, rayDir, ship_pos, pickRadius)) {
-			std::cout << "UFO clicked!\n";
+		float pickRadius = 2.f;
+		if (rayIntersectsSphere(activeCamera->Position, rayDir, origin, pickRadius)) {
 			is_clicked = true;
 			if (!ufo_animation) {
 				ufo_animation = true;
@@ -342,7 +347,7 @@ void process_input(GLFWwindow* window, SCamera& camera, float deltaTime)
 		ufo_animation = false;
 		beam_animation = false;
 	}
-	
+
 
 }
 
@@ -392,10 +397,10 @@ void initialise_buffers() {
 	glBindVertexArray(VAOs[0]);
 	// Generate number of VBOs
 	glCreateBuffers(NUM_VBO, VBOs);
-	// Bind VBO 0 (for the triangle vertices)
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
 
-	// Generate the tangent and bitangent vectors
+	// Bind VBO 0 (Pyramid)
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+	// Generate the tangent and bitangent vectors for pyramid to use in Parrallax Mapping
 	std::vector<GLfloat> finalVertexData;
 	// Work out number of triangles in the shape
 	size_t numVertices = sizeof(double_pyramid_vertices) / sizeof(GLfloat) / floatsPerInputVertex;
@@ -430,7 +435,7 @@ void initialise_buffers() {
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);
 	// Create a texture map to store textures
 	std::map<std::string, GLuint> textures;
-	// Load an Object with textures
+	// Load object
 	std::vector<triangle> triangles;
 	// Specify the base folder path
 	std::string obj_path = "objs/ufo/Low_poly_UFO.obj";
@@ -442,27 +447,27 @@ void initialise_buffers() {
 	glBufferData(GL_ARRAY_BUFFER, ship_array.size() * sizeof(GLfloat), ship_array.data(), GL_STATIC_DRAW);
 
 	// Set up vertex attributes
-	// Position attribute (3 floats)
+	// Position attribute 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// Color attribute (3 floats)
+	// Colour attribute 
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	// Texture attribute (2 floats)
+	// Texture attribute 
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-	// Normal attribute (3 floats)
+	// Normal attribute 
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(8 * sizeof(float)));
 	glEnableVertexAttribArray(3);
 
-	// Tangent attribute (3 floats)
+	// Tangent attribute 
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(11 * sizeof(float)));
 	glEnableVertexAttribArray(4);
 
-	// Bitangent attribute (3 floats)
+	// Bitangent attribute 
 	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(14 * sizeof(float)));
 	glEnableVertexAttribArray(5);
 
@@ -498,7 +503,6 @@ void initialise_buffers() {
 
 	// ---- CYLINDER ----
 	int num_cylinder_vertices = 0;
-	// Use 48 Faces
 	// Num Faces, Top Radius, Bottom Radius, Height, Opacity, Store num vertices
 	cylinder = form_cylinder(64, 0.3f, 1.8f, 2.2f, 0.3f, num_cylinder_vertices);
 
@@ -521,18 +525,17 @@ void initialise_buffers() {
 	glEnableVertexAttribArray(3);
 
 
-	
+
 
 	//  ---------- JET PLANE ----------
-	// Configure VAO 5 (Plane)
+	// Configure VAO 5 
 	glBindVertexArray(VAOs[5]);
-	// Bind VBO 5 (for the Plane vertices)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[5]);
 
 	// Create a texture map to store textures
 	std::map<std::string, GLuint> jet_textures;
 
-	// Load an Object with textures
+	// Load object
 	std::vector<triangle> jet_triangles;
 	// Specify the base folder path
 	obj_path = "objs/jet/Rafale.obj";
@@ -617,7 +620,7 @@ void initialise_buffers() {
 	// Create a texture map to store textures
 	std::map<std::string, GLuint> rock_textures;
 
-	// Load an Object with textures
+	// Load object
 	std::vector<triangle> rock_triangles;
 	// Specify the base folder path
 	obj_path = "objs/egypt/source/test.obj";
@@ -662,7 +665,7 @@ void initialise_buffers() {
 	// Create a texture map to store textures
 	std::map<std::string, GLuint> vase_textures;
 
-	// Load an Object with textures
+	// Load object
 	std::vector<triangle> vase_triangles;
 	// Specify the base folder path
 	obj_path = "objs/vase/Flowervase.obj";
@@ -730,7 +733,7 @@ void initialise_cameras() {
 	// Initial position right rear corner
 	MoveAndOrientCamera(Fixed_Right_Rear, glm::vec3(0.f, 0.f, 0.f), fixed_dist, -90.f, -20.f);
 
-	
+
 	InitCamera(Fixed_Rotate_Camera);
 	// Initial position far view with slight x and y offset
 	MoveAndOrientCamera(Fixed_Rotate_Camera, glm::vec3(0.f, 0.f, 0.f), cam_dist, -15.f, -20.f);
@@ -741,7 +744,7 @@ float random_range(float min, float max) {
 }
 
 void update_shooting_star_path() {
-	// Randomize control points (example: stay within view bounds)
+	// Randomise control points each iteration
 	std::vector<point> ctrl_points;
 	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(4.f, 6.f), 0.f));
 	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(0.f, 3.f), 0.f));
@@ -760,7 +763,7 @@ void update_shooting_star_path() {
 }
 
 void draw_star(unsigned int program) {
-    glUseProgram(program);
+	glUseProgram(program);
 
 	glm::mat4 view = glm::lookAt(activeCamera->Position, activeCamera->Position + activeCamera->Front, activeCamera->Up);
 	glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -774,16 +777,16 @@ void draw_star(unsigned int program) {
 	model = glm::scale(model, glm::vec3(1.f, 1.f, 1.f));
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glLineWidth(3.0f); 
-    glBindVertexArray(VAOs[6]);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glLineWidth(3.0f);
+	glBindVertexArray(VAOs[6]);
 
 	static float t = 0.0f;
-	const float speed = 0.5f; 
+	const float speed = 0.5f;
 	const int totalPoints = shooting_star.size() / 6;
 	const int trailLength = 20;
 
-    // Draw the line one part at a time
+	// Draw the line one part at a time
 	int startIdx = (int)(t * totalPoints);
 	int endIdx = std::min(startIdx + trailLength, totalPoints);
 	int count = endIdx - startIdx;
@@ -793,7 +796,7 @@ void draw_star(unsigned int program) {
 	}
 
 	// Update time parameter
-	t += speed * deltaTime; 
+	t += speed * deltaTime;
 	if (t > 1.0f) {
 		t = 0.0f;
 		// Give the star a new path
@@ -891,7 +894,7 @@ void draw_ufo(unsigned int program) {
 			modelUFO = glm::rotate(modelUFO, current_time / 20, glm::vec3(0.f, 1.f, 0.f));
 			modelUFO = glm::scale(modelUFO, glm::vec3(scale));
 
-			// Optionally stop animation after duration
+			// Stop animation after duration
 			if (t >= duration) {
 				ufo_animation = false;
 			}
@@ -901,7 +904,7 @@ void draw_ufo(unsigned int program) {
 			modelUFO = glm::scale(modelUFO, glm::vec3(0.f, 0.f, 0.f));
 		}
 	}
-	
+
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelUFO));
 
 
@@ -942,14 +945,14 @@ void draw_jet(unsigned int program) {
 	// Position on the path of the circle
 	float x = radius * cos(angle);
 	float z = radius * sin(angle);
-	float y = 30.0f; 
+	float y = 30.0f;
 
 	// Apply transformations to the Jet
 	glm::mat4 modelJet = glm::mat4(1.0f);
 	modelJet = glm::scale(modelJet, glm::vec3(0.08f, 0.08f, 0.08f));
 	// Move to the side of the UFO, initial position
 	modelJet = glm::translate(modelJet, glm::vec3(x, y, z));
-	
+
 	// Rotate to be perpendicular to tangent of path.
 	modelJet = glm::rotate(modelJet, -angle, glm::vec3(0.f, 1.f, 0.f));
 	// Bank the plane towards the center of the target.
@@ -978,11 +981,7 @@ void draw_skybox(unsigned int program) {
 	// Activate texture unit and bind texture
 	glActiveTexture(GL_TEXTURE10);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
-
-	// Set the uniform to 10
 	glUniform1i(glGetUniformLocation(program, "skybox"), 10);
-
-	// Bind skybox VAO
 	glBindVertexArray(VAOs[7]);
 
 	// Set view and projection matrices
@@ -1011,7 +1010,7 @@ void draw_rocks(unsigned int program) {
 	model = glm::translate(model, glm::vec3(3.f, 1.1f, 4.f));
 	model = glm::rotate(model, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
 	model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-	
+
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 
@@ -1083,9 +1082,9 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), false);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_bump"), false);
 
-
 	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "projectedLightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(projectedLightSpaceMatrix));
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "camPos"), activeCamera->Position.x, activeCamera->Position.y, activeCamera->Position.z);
+
 	// Directional Lighting
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightColour"), 1.f, 0.98f, 0.7f);
@@ -1093,32 +1092,42 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	// Default Shininess
 	float default_shine = 64.f;
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
-	// Spot lighting
 
-	float t = glfwGetTime(); 
+
+	// Spot lighting
+	float t = glfwGetTime();
 	// Rotate each spolight with the UFO
 	for (int i = 0; i < NUM_SPOTLIGHTS; ++i) {
 		// Space around 360 degrees / 2pi
-		float angle = t / 20.0f + i * glm::two_pi<float>() / NUM_SPOTLIGHTS;  
-		glm::vec3 dir = glm::normalize(glm::vec3(cos(-angle), -0.6f, sin(-angle)));  
+		float spot_speed = 2.0f;
+		float angle = t / spot_speed + i * glm::two_pi<float>() / NUM_SPOTLIGHTS;
+		glm::vec3 dir = glm::normalize(glm::vec3(cos(-angle), -0.6f, sin(-angle)));
 		spotLightDirections[i] = dir;
 	}
 
-	// Give false directions to remove spotlights when ship dissapears
+	// Give false directions to remove spotlights and poslight when ship dissapears
 	if (!is_clicked) {
 		glUniform3fv(glGetUniformLocation(renderShaderProgram, "spotLightDirections"), NUM_SPOTLIGHTS, glm::value_ptr(spotLightDirections[0]));
+		glUniform1i(glGetUniformLocation(renderShaderProgram, "posActive"), true);
 	}
 	else {
 		std::vector<glm::vec3> dummyDirections(NUM_SPOTLIGHTS, glm::vec3(0.0f));
 		glUniform3fv(glGetUniformLocation(renderShaderProgram, "spotLightDirections"), NUM_SPOTLIGHTS, glm::value_ptr(dummyDirections[0]));
+		glUniform1i(glGetUniformLocation(renderShaderProgram, "posActive"), false);
 	}
 
-	
+
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "spotLightPos"), spotLightPos.x, spotLightPos.y, spotLightPos.z);
-	glUniform3f(glGetUniformLocation(renderShaderProgram, "spotLightColour"), 0.f, 1.f, 0.f);
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "spotColour"), 1.f, 0.f, 0.f);
 
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "spotLightInnerCutoff"), 45.f);
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "spotLightOuterCutoff"), 45.f);
+
+
+	// Positional Light
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "posLightPos"), posLightPos.x, posLightPos.y, posLightPos.z);
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "posColour"), posLightColour.r, posLightColour.g, posLightColour.b);
+
 
 	// Initial texture scale
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 1.0f);
@@ -1212,7 +1221,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	// Re-activate textures
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
-	
+
 
 
 	// ---- JET PLANE ----
@@ -1296,7 +1305,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glActiveTexture(GL_TEXTURE16);
 	glBindTexture(GL_TEXTURE_2D, vase_rough);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "roughnessMap"), 16);
-	
+
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), true);
 
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_pbr"), true);
@@ -1304,7 +1313,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	draw_vase(renderShaderProgram);
 
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_pbr"), false);
-	
+
 
 	// ---- UFO ----
 	// Activate textures for UFO
@@ -1390,6 +1399,7 @@ int main() {
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 
+
 	// Init gl3w after making context.
 	if (gl3wInit()) {
 		std::cout << "Failed to initialize GL3W" << std::endl;
@@ -1409,7 +1419,7 @@ int main() {
 	GLuint star_shader = CompileShader("star.vert", "star.frag");
 	GLuint skybox_shader = CompileShader("skybox.vert", "skybox.frag");
 
-	
+
 	// Initialise the cameras
 	initialise_cameras();
 
@@ -1420,7 +1430,7 @@ int main() {
 	glActiveTexture(GL_TEXTURE10);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
 
-	
+
 	// Sand using MipMaps
 	const char* sand_files[11] = {
 		"sand_mipmap/sand_1024x1024.bmp",
@@ -1465,7 +1475,7 @@ int main() {
 	rocks_ao = setup_texture_pbr("sandstone_parra/stone-block-wall_ao.png", false);
 	vase_tex = setup_texture_pbr("objs/vase/T_Flowervase_BC.png", true);
 	vase_normal = setup_texture_pbr("objs/vase/T_Flowervase_N.png", false);
-	vase_metalic = setup_texture_pbr("objs/vase/T_Flowervase_MT.png, false", false);
+	vase_metalic = setup_texture_pbr("objs/vase/T_Flowervase_MT.png", false);
 	vase_rough = setup_texture_pbr("objs/vase/T_Flowervase_R.png", false);
 	vase_ao = setup_texture_pbr("objs/vase/T_Flowervase_AO.png", false);
 	// Enable blending for transparency
@@ -1473,8 +1483,6 @@ int main() {
 	// Specify blend function 
 	// Final colour is combination of source fragment scaled by alpha and destination fragment scaled by 1 - alpha
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	
 
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);
@@ -1487,6 +1495,7 @@ int main() {
 		// Use the shader program
 		glUseProgram(lighting_program);
 
+		// Enable multisampling defined by hint
 		glEnable(GL_MULTISAMPLE);
 
 		// Create a Projected Light Space Matrix
@@ -1496,7 +1505,7 @@ int main() {
 		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 
 		// Make sure light position is far enough away in the direction opposite to light direction
-		lightPos = -lightDirection * 10.0f; 
+		lightPos = -lightDirection * 10.0f;
 		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 projectedLightSpaceMatrix = lightProjection * lightView;
 
@@ -1509,7 +1518,7 @@ int main() {
 
 		draw_star(star_shader);
 
-		
+
 
 		// First person camera
 		if (current_camera == 1) {
@@ -1533,7 +1542,7 @@ int main() {
 			MoveAndOrientCamera(Fixed_Rotate_Camera, orbit_center, orbit_radius, xoffset, yoffset);
 		}
 
-		
+
 
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);
