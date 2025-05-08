@@ -88,7 +88,7 @@ std::vector<GLuint> jet_texture_ids;
 
 std::vector<GLuint> rock_texture_ids;
 
-GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex, rocks_tex, rocks_normal, rocks_height;
+GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex, rocks_tex, rocks_normal, rocks_depth, rocks_rough, rocks_metal, rocks_ao;
 
 
 // Copy of matrices used by UFO
@@ -1094,7 +1094,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 1.0f);
 
 
-	// ---- Flat Plane ----
+	// ---- DESERT PLANE ----
 	// Activate sand texture in texture unit 8
 	glActiveTexture(GL_TEXTURE8);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 8);
@@ -1106,7 +1106,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 
 
 
-	// --- Cylinder ---
+	// --- CYLINDER ---
 	// Deactivate textures
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), false);
 	// Very shiny for beam
@@ -1118,7 +1118,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	
 
 
-	// ---- Jet Plane ----
+	// ---- JET PLANE ----
 	// Load texture
 	glActiveTexture(GL_TEXTURE9);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 9);
@@ -1129,7 +1129,8 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	// ---- ROCKS ----
 	// Base texture
 	glActiveTexture(GL_TEXTURE11);
-	glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 11);
+	//glUniform1i(glGetUniformLocation(renderShaderProgram, "tex0"), 11);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "albedoMap"), 11);
 
 	// Normal Map
 	glActiveTexture(GL_TEXTURE12);
@@ -1139,16 +1140,32 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glActiveTexture(GL_TEXTURE13);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "depth_map"), 13);
 
+	// Texture unit 14 - Rocks Metalic
+	glActiveTexture(GL_TEXTURE14);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "metallicMap"), 14);
+
+	// Texture unit 15 - AO
+	glActiveTexture(GL_TEXTURE15);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "aoMap"), 15);
+
+	// Texture unit 2 - Rocks Roughness
+	glActiveTexture(GL_TEXTURE16);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "roughnessMap"), 16);
+
 	// Increase texture scale
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 25.0f);
 
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), true);
+
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_pbr"), true);
 
 
 	draw_rocks(renderShaderProgram);
 
 	// Reset texture scale
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 1.0f);
+
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_pbr"), false);
 
 
 
@@ -1283,7 +1300,10 @@ int main() {
 	jet_tex = setup_texture("objs/jet/Paint_tex.jpg");
 	rocks_tex = setup_texture("sandstone_parra/stone-block-wall_albedo.png");
 	rocks_normal = setup_texture("sandstone_parra/stone-block-wall_normal-dx.png");
-	rocks_height = setup_texture("sandstone_parra/stone-block-wall_height.png");
+	rocks_depth = setup_texture("sandstone_parra/stone-block-wall_depth.png");
+	rocks_rough = setup_texture("sandstone_parra/stone-block-wall_roughness.png");
+	rocks_metal = setup_texture("sandstone_parra/stone-block-wall_metallic.png");
+	rocks_ao = setup_texture("sandstone_parra/stone-block-wall_ao.png");
 	// Enable blending for transparency
 	glEnable(GL_BLEND);
 	// Specify blend function 
@@ -1294,9 +1314,6 @@ int main() {
 	// Texture Unit 1 is used by the Texture class.
 
 	// Bind to texture units
-	// Texture unit 2 - Bricks
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, brick_tex);
 
 	// Texture unit 3 - UFO Diffuse
 	glActiveTexture(GL_TEXTURE3); 
@@ -1340,7 +1357,19 @@ int main() {
 
 	//Texture unit 13 - Rocks Depth Map 
 	glActiveTexture(GL_TEXTURE13);
-	glBindTexture(GL_TEXTURE_2D, rocks_height);
+	glBindTexture(GL_TEXTURE_2D, rocks_depth);
+
+	// Texture unit 14 - Rocks Metalic
+	glActiveTexture(GL_TEXTURE14);
+	glBindTexture(GL_TEXTURE_2D, rocks_metal);
+
+	// Texture unit 15 - Rocks AO
+	glActiveTexture(GL_TEXTURE15);
+	glBindTexture(GL_TEXTURE_2D, rocks_ao);
+
+	// Texture unit 16 - Rocks Roughness
+	glActiveTexture(GL_TEXTURE16);
+	glBindTexture(GL_TEXTURE_2D, rocks_rough);
 
 	// Account for depth of 3D objects.
 	glEnable(GL_DEPTH_TEST);
