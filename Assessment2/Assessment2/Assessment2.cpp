@@ -503,8 +503,6 @@ void initialise_buffers() {
 	glEnableVertexAttribArray(3);
 
 
-
-
 	//  ---------- JET PLANE ----------
 	// Configure VAO 5 
 	glBindVertexArray(VAOs[5]);
@@ -691,6 +689,7 @@ void initialise_cameras() {
 }
 
 float random_range(float min, float max) {
+	// Generate a random float between min and max
 	return min + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (max - min)));
 }
 
@@ -701,9 +700,9 @@ void update_shooting_star_path() {
 	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(0.f, 3.f), 0.f));
 	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(-3.f, -1.f), 0.f));
 	ctrl_points.push_back(point(random_range(-6.f, 6.f), random_range(-4.f, -2.f), 0.f));
-
+	// Eval the new curve
 	std::vector<point> points = EvaluateBezierCurve(ctrl_points, 128);
-
+	// Clear prev points and make a new vector
 	shooting_star.clear();
 	shooting_star = MakeFloatsFromVector(points, 1.f, 1.f, 0.f);
 
@@ -866,21 +865,21 @@ void draw_ufo(unsigned int program) {
 }
 
 void draw_dunes(unsigned int program) {
-	// Flat Plane
+	// Dunes Plane
 	glBindVertexArray(VAOs[3]);
-	glm::mat4 modelFlatPlane = glm::mat4(1.0f);
+	glm::mat4 modelDunes = glm::mat4(1.0f);
 	// Move right and forwards and down 
-	modelFlatPlane = glm::translate(modelFlatPlane, glm::vec3(6.f, -0.1f, 1.f));
-	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelFlatPlane));
+	modelDunes = glm::translate(modelDunes, glm::vec3(6.f, -0.1f, 1.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelDunes));
 	glDrawArrays(GL_TRIANGLES, 0, desert_dunes.size() / 11);
 }
 
 void draw_pyramid(unsigned int program) {
 	// Pyramid
 	glBindVertexArray(VAOs[0]);
-	glm::mat4 modelTriangle = glm::mat4(1.0f);
-	modelTriangle = glm::scale(modelTriangle, glm::vec3(1.f, 1.f, 1.f));
-	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelTriangle));
+	glm::mat4 modelPyramind = glm::mat4(1.0f);
+	modelPyramind = glm::scale(modelPyramind, glm::vec3(1.f, 1.f, 1.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelPyramind));
 	int num_vertices = sizeof(double_pyramid_vertices) / (11 * sizeof(float));
 	glDrawArrays(GL_TRIANGLES, 0, num_vertices);
 }
@@ -910,8 +909,6 @@ void draw_jet(unsigned int program) {
 	modelJet = glm::rotate(modelJet, glm::radians(25.0f), glm::vec3(0.f, 0.f, 1.f));
 
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelJet));
-
-
 	int num_object_vertices = jet_array.size() / 11;
 	// Draw the Plane
 	glDrawArrays(GL_TRIANGLES, 0, num_object_vertices);
@@ -1003,20 +1000,23 @@ void generate_depth_map(unsigned int shadowShaderProgram, ShadowStruct shadow, g
 	// Set the uniform for the light space matrix in the shader
 	glUniformMatrix4fv(glGetUniformLocation(shadowShaderProgram, "projectedLightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(projectedLightSpaceMatrix));
 
-	// Draw the floor and cubes using the shadow shader
+	// Draw the objects using shadow shader
 	draw_pyramid(shadowShaderProgram);
 	draw_ufo(shadowShaderProgram);
 	draw_dunes(shadowShaderProgram);
 	draw_jet(shadowShaderProgram);
 	draw_rocks(shadowShaderProgram);
 	draw_vase(shadowShaderProgram);
+
 	// Unbind the framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
+	// Set the viewport to the size of the window
 	glViewport(0, 0, width, height);
 
+	// Constant solid background colour 
 	static const GLfloat bgd[] = { .8f, .8f, .8f, 1.f };
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -1040,10 +1040,10 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightDirection"), lightDirection.x, lightDirection.y, lightDirection.z);
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightColour"), 1.f, 0.98f, 0.7f);
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+
 	// Default Shininess
 	float default_shine = 64.f;
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
-
 
 	// Spot lighting
 	float t = glfwGetTime();
@@ -1323,7 +1323,7 @@ int main() {
 	// Initialize GLFW
 	glfwInit();
 
-	// Enable 8x Multisampling
+	// Set 8x Multisampling
 	glfwWindowHint(GLFW_SAMPLES, 8);
 
 	// Create a windowed mode window and its OpenGL context
@@ -1349,38 +1349,37 @@ int main() {
 	// Make cursor hidden
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-
-
 	// Init gl3w after making context.
 	if (gl3wInit()) {
 		std::cout << "Failed to initialize GL3W" << std::endl;
 		return -1;
 	}
 
-	// Get the maximum amount of samples allowed by querying openGL
+	// Get the maximum amount of samples allowed by querying GL_MAX_SAMPLES
 	int max_samples;
 	glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
 	printf("Max Samples Supported: %d\n", max_samples);
 
 	ShadowStruct shadow = setup_shadowmap(SH_MAP_WIDTH, SH_MAP_HEIGHT);
 
-	// Create a vertext shader and Fragment Shader using the Shader class.
+	// Lighting and PBR Shader
 	GLuint lighting_program = CompileShader("lighting_vertex.vert", "lighting_fragment.frag");
+	// Shadow Shader
 	GLuint shadow_shader = CompileShader("shadow.vert", "shadow.frag");
+	// Bestier Curve Shader for Shooting Stars
 	GLuint star_shader = CompileShader("star.vert", "star.frag");
+	// Cubemap Shader
 	GLuint skybox_shader = CompileShader("skybox.vert", "skybox.frag");
 
-
-	// Initialise the cameras
+	// Initialise  cameras
 	initialise_cameras();
 
-	// Create VAO and VBOs
+	// Create VAO and VBOs, set objects and textures
 	initialise_buffers();
 
 	//Texture unit 10 - Cubemap
 	glActiveTexture(GL_TEXTURE10);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
-
 
 	// Sand using MipMaps
 	const char* sand_files[11] = {
@@ -1397,8 +1396,7 @@ int main() {
 		"sand_mipmap/sand_1x1.bmp"
 	};
 	// Faces for each side of the cubemap
-	vector<std::string> faces
-	{
+	vector<std::string> faces{
 		"skybox/right.png",
 		"skybox/left.png",
 		"skybox/bottom.png",
@@ -1406,11 +1404,13 @@ int main() {
 		"skybox/front.png",
 		"skybox/back.png"
 	};
+
 	// Set up the cubemap texture
 	skybox_tex = setup_cubemap(faces);
-
+	// Set up the sand mipmap texture
 	sand_tex = setup_mipmaps(sand_files, 11);
-	// Texture to load.
+
+	// Load rest of textures
 	// SRGB should be true unless for PBR
 	ship_tex = setup_texture("objs/ufo/ufo_diffuse.png");
 	ship_glow = setup_texture("objs/ufo/ufo_diffuse_glow.png");
@@ -1429,6 +1429,7 @@ int main() {
 	vase_metalic = setup_texture_pbr("objs/vase/T_Flowervase_MT.png", false);
 	vase_rough = setup_texture_pbr("objs/vase/T_Flowervase_R.png", false);
 	vase_ao = setup_texture_pbr("objs/vase/T_Flowervase_AO.png", false);
+
 	// Enable blending for transparency
 	glEnable(GL_BLEND);
 	// Specify blend function 
@@ -1450,12 +1451,8 @@ int main() {
 		glEnable(GL_MULTISAMPLE);
 
 		// Create a Projected Light Space Matrix
-		// Adjust these parameters based on your scene size
 		float near_plane = 0.1f, far_plane = 20.0f;
-		// Use tighter bounds that just cover your scene
 		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-
-		// Make sure light position is far enough away in the direction opposite to light direction
 		lightPos = -lightDirection * 10.0f;
 		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4 projectedLightSpaceMatrix = lightProjection * lightView;
@@ -1463,13 +1460,11 @@ int main() {
 		// Must be drawn first
 		draw_skybox(skybox_shader);
 
+		// Render rest of objects
 		generate_depth_map(shadow_shader, shadow, projectedLightSpaceMatrix);
-		// Render the pyramid with a shadow map
 		render_with_shadow(lighting_program, shadow, projectedLightSpaceMatrix);
-
+		// Render the shooting stars
 		draw_star(star_shader);
-
-
 
 		// First person camera
 		if (current_camera == 1) {
@@ -1493,19 +1488,20 @@ int main() {
 			MoveAndOrientCamera(Fixed_Rotate_Camera, orbit_center, orbit_radius, xoffset, yoffset);
 		}
 
-
-
+		// Unbind
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
 	}
 
 	// Remove objects
 	glDeleteVertexArrays(NUM_VAO, VAOs);
 	glDeleteBuffers(NUM_VBO, VBOs);
-	// Delete the shader program
+	// Delete the shader programs
 	glDeleteProgram(lighting_program);
+	glDeleteProgram(shadow_shader);
+	glDeleteProgram(star_shader);
+	glDeleteProgram(skybox_shader);
 
 	// Remove the window
 	glfwDestroyWindow(window);
