@@ -43,7 +43,6 @@ public:
 	vertex v1, v2, v3;
 	bool reflect;
 	int primID;
-	int texID;
 };
 
 // Function to calculate tangent and bitangent vectors
@@ -105,7 +104,7 @@ void calculateTangentSpace(vertex& v1, vertex& v2, vertex& v3)
 	v1.bitangent = v2.bitangent = v3.bitangent = bitangent;
 }
 
-int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* base_folder, std::map<std::string, GLuint>* textures = nullptr)
+int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* base_folder)
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -117,30 +116,6 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 		throw std::runtime_error(warn + err);
 	}
 
-	// Load materials/textures
-	std::map<int, GLuint> mat_to_tex_map; 
-
-	if (textures != nullptr && !materials.empty()) {
-		for (size_t m = 0; m < materials.size(); m++) {
-			const tinyobj::material_t& mat = materials[m];
-
-			// Check for diffuse texture
-			if (!mat.diffuse_texname.empty()) {
-				std::string tex_path = std::string(base_folder) + "/" + mat.diffuse_texname;
-
-				// Check if already loaded texture
-				if (textures->find(tex_path) == textures->end()) {
-					// Load the texture using setup_texture function
-					GLuint tex_id = setup_texture(tex_path.c_str());
-					(*textures)[tex_path] = tex_id;
-				}
-
-				// Store the mapping from material index to texture ID
-				mat_to_tex_map[m] = (*textures)[tex_path];
-				printf("Material %zu uses texture: %s\n", m, tex_path.c_str());
-			}
-		}
-	}
 
 
 	std::vector<vertex> vertices;
@@ -228,16 +203,7 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 				calculateTangentSpace(tri.v1, tri.v2, tri.v3);
 
 				tri.reflect = false;
-				tri.primID = io_tris->size();
-
-				// Assign texture ID if available
-				if (mat_id >= 0 && mat_to_tex_map.find(mat_id) != mat_to_tex_map.end()) {
-					tri.texID = mat_to_tex_map[mat_id];
-				}
-				else {
-					// No texture or default texture
-					tri.texID = 0;
-				}
+				tri.primID = io_tris->size();				
 
 				io_tris->push_back(tri);
 			}

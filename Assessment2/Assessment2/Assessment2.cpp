@@ -19,14 +19,10 @@
 #include "interactivity.h"
 #include "tangent.h"
 
-
-// useful for picking colours
-// https://keiwando.com/Colour-picker/
-
-
-
+// Screen dimensions
 unsigned int width = 1000;
 unsigned int height = 800;
+// Field of view
 float fov = 45.f;
 
 // Interactive Cameras
@@ -43,8 +39,9 @@ SCamera Fixed_Right_Rear;
 int current_camera = 0;
 const int  num_cameras = 7;
 
+// Camera references
 SCamera* cameras[num_cameras] = { &Model_Viewer_Camera, &First_Person_Camera, &Fixed_Rotate_Camera, &Fixed_Left_Front, &Fixed_Left_Rear, &Fixed_Right_Front, &Fixed_Right_Rear };
-
+// Current camera in use
 SCamera* activeCamera = &Model_Viewer_Camera;
 
 // Radius of the cam orbit
@@ -77,8 +74,7 @@ glm::vec3 posLightColour = glm::vec3(0.f, 0.5f, 0.f);
 #define SH_MAP_WIDTH 2048
 #define SH_MAP_HEIGHT 2048
 
-
-//std::vector<GLfloat> planeVertices;
+// Arrays storing vertex data for loaded objects
 std::vector<GLfloat> ship_array;
 std::vector<GLfloat> cylinder;
 std::vector<GLfloat> jet_array;
@@ -87,21 +83,13 @@ std::vector<GLfloat> shooting_star;
 std::vector<GLfloat> rock_array;
 std::vector<GLfloat> vase_array;
 
-// Textures for UFO
-std::vector<GLuint> ufo_texture_ids;
-// Textures for Jet
-std::vector<GLuint> jet_texture_ids;
-
-std::vector<GLuint> rock_texture_ids;
-
-std::vector<GLuint> vase_texture_ids;
-
+// Textures for objects
 GLuint brick_tex, sand_tex, ship_tex, ship_glow, ship_normal, ship_specular, ship_bump, jet_tex, skybox_tex, rocks_tex, rocks_normal, rocks_depth, rocks_rough, rocks_metal, rocks_ao, vase_tex, vase_normal, vase_metalic, vase_rough, vase_ao;
 
-
-// Copy of matrices used by UFO
+// Global Projection and View Matrices
 glm::mat4 projection;
 glm::mat4 view;
+
 // Determine if the UFO has been clicked
 bool is_clicked = false;
 
@@ -113,17 +101,13 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-
+// Number of VAO and VBOs to create and use
 #define NUM_VBO 10
 #define NUM_VAO 10
-// Create a Vertex Array Object (VAO)
-// Stores pointers to VBOs and tells OpenGL how to interpret the data.
-// Need to make before VBO, can be used to switch between them
 GLuint VAOs[NUM_VAO];
-// Store vertex data in vertex buffer object.
 GLuint VBOs[NUM_VBO];
 
-// Create an array of floats representing coordinates of a triangle.
+// Double Pyramid vertices
 GLfloat double_pyramid_vertices[] = {
 	// Coordinates, Colours, Texture, Normal
 	-1.0f, 0.0f, -1.0f,  	1.f, 1.0f, 1.0f,		0.0f, 0.0f,		-1.f, 1.f, 0.f,		//v1
@@ -173,7 +157,7 @@ GLfloat double_pyramid_vertices[] = {
 	0.0f, -1.0f, 0.0f,      1.f, 1.0f, 1.0f,		0.0f, 1.0f,		0.f, -1.f, 1.f,		//v3
 };
 
-// Cube for Skybox cubemap
+// Cube vertices for Skybox 
 GLfloat cube_vertices[] = {
 	-1.0f,  1.0f, -1.0f,
 	-1.0f, -1.0f, -1.0f,
@@ -218,18 +202,20 @@ GLfloat cube_vertices[] = {
 	 1.0f, -1.0f,  1.0f
 };
 
+// Function to handle key input
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Handle key presses
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
+	// Change directional light direction
 	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
 	{
 		lightDirection = activeCamera->Front;
 	}
 
-
+	// Change cameras
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 		// Switch between cameras
 		if (current_camera + 1 == num_cameras) {
@@ -244,7 +230,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		// Switch to the correct camera
 		activeCamera = cameras[current_camera];
 	}
-	// Model Viewer Camera Logic
+
+	// Model Viewer Camera
 	if (current_camera == 0) {
 		// Using the arrow keys to move a camera around the object.
 		float x_offset = 0.f;
@@ -296,19 +283,20 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	// Rotational Camera Orbit Speed Controls
 	if (current_camera == 2) {
 		if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS)
-			orbit_speed += 0.001f;
+			orbit_speed += 0.0005f;
 		if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS)
-			orbit_speed -= 0.001f;
+			orbit_speed -= 0.0005f;
 	}
 
 }
-
+// Mouse click callback
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		// Origin of click sphere
 		glm::vec3 origin = glm::vec3(0.f, 3.f, 0.f);
 
 		double xpos, ypos;
+		// Get position of cursor at time of click
 		glfwGetCursorPos(window, &xpos, &ypos);
 		glm::vec3 rayDir = screenToWorldRay(xpos, ypos, width, height, projection, view);
 		// Radius of detection
@@ -316,6 +304,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		if (rayIntersectsSphere(activeCamera->Position, rayDir, origin, pickRadius)) {
 			is_clicked = true;
 			if (!ufo_animation) {
+				// Start animations
 				ufo_animation = true;
 				beam_animation = true;
 				start_time = glfwGetTime();
@@ -324,6 +313,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
+// Process input for the first person camera
 void process_input(GLFWwindow* window, SCamera& camera, float deltaTime)
 {
 	if (current_camera == 1) {
@@ -347,10 +337,9 @@ void process_input(GLFWwindow* window, SCamera& camera, float deltaTime)
 		ufo_animation = false;
 		beam_animation = false;
 	}
-
-
 }
 
+// Resize window callback function
 void resize_callback(GLFWwindow*, int w, int h)
 {
 	// Update width and height values
@@ -364,6 +353,7 @@ void resize_callback(GLFWwindow*, int w, int h)
 	projection = glm::perspective(glm::radians(fov), aspect, 0.01f, 100.0f);
 }
 
+// Handle mouse movement for camera
 void mouse_move_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	// Only process mouse input if the current active camera is this one
@@ -393,13 +383,11 @@ void initialise_buffers() {
 	glGenVertexArrays(NUM_VAO, VAOs);
 
 	// ---------- PYRAMID ----------
-	// Bind VAO 0 (for the triangle)
+	// Bind buffers
 	glBindVertexArray(VAOs[0]);
-	// Generate number of VBOs
 	glCreateBuffers(NUM_VBO, VBOs);
-
-	// Bind VBO 0 (Pyramid)
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+
 	// Generate the tangent and bitangent vectors for pyramid to use in Parrallax Mapping
 	std::vector<GLfloat> finalVertexData;
 	// Work out number of triangles in the shape
@@ -433,14 +421,12 @@ void initialise_buffers() {
 	glBindVertexArray(VAOs[2]);
 	// Bind VBO 2 
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);
-	// Create a texture map to store textures
-	std::map<std::string, GLuint> textures;
 	// Load object
 	std::vector<triangle> triangles;
 	// Specify the base folder path
 	std::string obj_path = "objs/ufo/Low_poly_UFO.obj";
 	std::string base_path = "objs/ufo";
-	int num_triangles = obj_parse(obj_path.c_str(), &triangles, base_path.c_str(), &textures);
+	int num_triangles = obj_parse(obj_path.c_str(), &triangles, base_path.c_str());
 	// Convert to array of floats
 	ship_array = tri_to_fl_array(triangles, true);
 	// Upload the vertex data to the VBO
@@ -470,13 +456,6 @@ void initialise_buffers() {
 	// Bitangent attribute 
 	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(14 * sizeof(float)));
 	glEnableVertexAttribArray(5);
-
-	// Store texture IDs for rendering
-	for (const auto& triangle : triangles) {
-		if (triangle.texID > 0 && std::find(ufo_texture_ids.begin(), ufo_texture_ids.end(), triangle.texID) == ufo_texture_ids.end()) {
-			ufo_texture_ids.push_back(triangle.texID);
-		}
-	}
 
 
 	// ---- FLAT PLANE ----
@@ -508,7 +487,6 @@ void initialise_buffers() {
 
 	glBindVertexArray(VAOs[4]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[4]);
-
 	glBufferData(GL_ARRAY_BUFFER, cylinder.size() * sizeof(GLfloat), cylinder.data(), GL_STATIC_DRAW);
 
 	// Position attribute
@@ -532,15 +510,13 @@ void initialise_buffers() {
 	glBindVertexArray(VAOs[5]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[5]);
 
-	// Create a texture map to store textures
-	std::map<std::string, GLuint> jet_textures;
 
 	// Load object
 	std::vector<triangle> jet_triangles;
 	// Specify the base folder path
 	obj_path = "objs/jet/Rafale.obj";
 	base_path = "objs/jet";
-	num_triangles = obj_parse(obj_path.c_str(), &jet_triangles, base_path.c_str(), &jet_textures);
+	num_triangles = obj_parse(obj_path.c_str(), &jet_triangles, base_path.c_str());
 
 	// Convert to array of floats
 	jet_array = tri_to_fl_array(jet_triangles, false);
@@ -559,12 +535,6 @@ void initialise_buffers() {
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
 	glEnableVertexAttribArray(3);
 
-	// Store texture IDs for rendering
-	for (const auto& triangle : jet_triangles) {
-		if (triangle.texID > 0 && std::find(jet_texture_ids.begin(), jet_texture_ids.end(), triangle.texID) == jet_texture_ids.end()) {
-			jet_texture_ids.push_back(triangle.texID);
-		}
-	}
 
 
 	// ---- SHOOTING STARS ----
@@ -572,7 +542,7 @@ void initialise_buffers() {
 	glBindVertexArray(VAOs[6]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[6]);
 
-	// Define control points
+	// Define initial control points
 	std::vector<point> ctrl_points = {
 			point(-5.f, 4.f, 0.f),
 			point(0.f, 2.f, 0.f),
@@ -601,12 +571,12 @@ void initialise_buffers() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+
+
 	// ---- SKYBOX ----
 	glBindVertexArray(VAOs[7]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[7]);
-
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices) * sizeof(GLfloat), cube_vertices, GL_STATIC_DRAW);
-
 	// Position attribute (Dobules as texture coordinates for cube map)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -617,15 +587,12 @@ void initialise_buffers() {
 	glBindVertexArray(VAOs[8]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[8]);
 
-	// Create a texture map to store textures
-	std::map<std::string, GLuint> rock_textures;
-
 	// Load object
 	std::vector<triangle> rock_triangles;
 	// Specify the base folder path
 	obj_path = "objs/egypt/source/test.obj";
 	base_path = "objs/egypt/source";
-	num_triangles = obj_parse(obj_path.c_str(), &rock_triangles, base_path.c_str(), &rock_textures);
+	num_triangles = obj_parse(obj_path.c_str(), &rock_triangles, base_path.c_str());
 
 	// Convert to array of floats
 	rock_array = tri_to_fl_array(rock_triangles, true);
@@ -650,27 +617,18 @@ void initialise_buffers() {
 	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(14 * sizeof(float)));
 	glEnableVertexAttribArray(5);
 
-	// Store texture IDs for rendering
-	for (const auto& triangle : rock_triangles) {
-		if (triangle.texID > 0 && std::find(rock_texture_ids.begin(), rock_texture_ids.end(), triangle.texID) == rock_texture_ids.end()) {
-			rock_texture_ids.push_back(triangle.texID);
-		}
-	}
 
 	// ---- VASE ----
 	// Configure VAO 9
 	glBindVertexArray(VAOs[9]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[9]);
 
-	// Create a texture map to store textures
-	std::map<std::string, GLuint> vase_textures;
-
 	// Load object
 	std::vector<triangle> vase_triangles;
 	// Specify the base folder path
 	obj_path = "objs/vase/Flowervase.obj";
 	base_path = "objs/vase/";
-	num_triangles = obj_parse(obj_path.c_str(), &vase_triangles, base_path.c_str(), &vase_textures);
+	num_triangles = obj_parse(obj_path.c_str(), &vase_triangles, base_path.c_str());
 
 	// Convert to array of floats
 	vase_array = tri_to_fl_array(vase_triangles, true);
@@ -694,13 +652,6 @@ void initialise_buffers() {
 	// Bitangent attribute 
 	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 17 * sizeof(float), (void*)(14 * sizeof(float)));
 	glEnableVertexAttribArray(5);
-
-	// Store texture IDs for rendering
-	for (const auto& triangle : vase_triangles) {
-		if (triangle.texID > 0 && std::find(vase_texture_ids.begin(), vase_texture_ids.end(), triangle.texID) == vase_texture_ids.end()) {
-			vase_texture_ids.push_back(triangle.texID);
-		}
-	}
 
 	// Unbind buffers and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
