@@ -1399,8 +1399,8 @@ int main() {
 	vector<std::string> faces{
 		"skybox/right.png",
 		"skybox/left.png",
-		"skybox/bottom.png",
 		"skybox/top.png",
+		"skybox/bottom.png",
 		"skybox/front.png",
 		"skybox/back.png"
 	};

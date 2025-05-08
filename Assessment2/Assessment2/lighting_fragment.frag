@@ -117,18 +117,16 @@ float calculateSpecular(vec3 normal, vec3 viewDir, vec3 lightDir) {
 }
 
 
-// --- Parallax Mapping ---
-// --- Improved Parallax Occlusion Mapping ---
+// --- Parallax Occlusion Mapping ---
 vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTangent)
 {
-    // Use scaled texture coordinates as input
+    // Scaled texture coordinates
     vec2 scaledCoords = texCoords * uv_scale;
     
-    // Adjust view direction for height scale (controls parallax strength)
+    // Adjust view direction for height scale
     vec2 P = viewDirTangent.xy * height_scale / viewDirTangent.z;
     
     // Determine number of layers dynamically based on view angle
-    // More layers when looking at grazing angles, fewer when looking straight on
     const float minLayers = 8.0;
     const float maxLayers = 32.0;
     float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDirTangent)));
@@ -146,7 +144,7 @@ vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTangent)
     vec2 currentTexCoords = scaledCoords;
     float currentDepthMapValue = texture(depth_map, currentTexCoords).r;
     
-    // Loop until we find where ray intersects heightmap
+    // Loop until find where ray intersects heightmap
     while(currentLayerDepth < currentDepthMapValue)
     {
         // Shift to next layer
@@ -154,11 +152,11 @@ vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTangent)
         currentDepthMapValue = texture(depth_map, currentTexCoords).r;
         currentLayerDepth += layerDepth;
         
-        // Safety check to prevent infinite loops
+        // Prevent infinite loops
         if(currentLayerDepth > 1.0) break;
     }
     
-    // ---- Parallax Occlusion Mapping refinement step ----
+    // ---- Refinement steo ----
     // Get previous texture coordinates
     vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
     
@@ -243,6 +241,8 @@ float shadowOnFragment(vec4 FragPosProjectedLightSpace) {
             shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
         }    
     }
+
+    // Shadow intensity
     shadow /= 9.0;
     
     return shadow;
@@ -272,7 +272,7 @@ vec3 CalculateDirectionalIllumination(vec3 Nnor, vec3 viewDir) {
     float ambient = 0.1;
     // Shadow before applying alpha
     float rawShadow = shadowOnFragment(FragPosProjectedLightSpace);
-    // Apply colour alpha for shadow intensity
+    // Apply colour alpha for shadow intensity based on transparancy
     float shadow = rawShadow * colour.a;
 
     // Calculate final colour
@@ -312,8 +312,6 @@ vec3 CalculateSpotIllumination(vec3 Nnor, vec3 viewDir) {
                 intensity = 1.0;
             }
 
-            // --- Blinn-Phong Lighting ---
-
             // Diffuse term 
             float iDiff = max(dot(Nnor, lightDir), 0.0);
 
@@ -336,7 +334,7 @@ vec3 CalculateSpotIllumination(vec3 Nnor, vec3 viewDir) {
             float diffuse = iDiff * intensity;
             float specular = iSpec * intensity;
 
-            // Accumulate light contribution from this spotlight
+            // Add light contribution from current spotlight
             totalLight += spotColour * (ambient + (diffuse + specular) * attenuation);
         }
     }
@@ -357,7 +355,6 @@ vec3 CalculatePositionalIllumination(vec3 Nnor, vec3 viewDir) {
         // Diffuse term
         float iDiff = max(dot(Nnor, lightDir), 0.0);
 
-        // --- Blinn-Phong  ---
         // Halfway vector for specular
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float iSpec = pow(max(dot(Nnor, halfwayDir), 0.0), shininess); 
@@ -379,7 +376,7 @@ vec3 CalculatePositionalIllumination(vec3 Nnor, vec3 viewDir) {
 }
 
 
-// Apply glow map to any Colour
+// Apply glow map
 vec4 applyGlowMap(vec4 baseColour) {
     if (uses_glow) {
         // Use scaled coordinates for glow map
@@ -395,7 +392,7 @@ vec4 applyGlowMap(vec4 baseColour) {
 
 // ---- PBR Lighting Stuff ----
 // Normal Distribution
-float DistributionGGX(vec3 N, vec3 H, float roughness)
+float pbrDistribution(vec3 N, vec3 H, float roughness)
 {
     float a = roughness * roughness;
     float a2 = a * a;
@@ -409,7 +406,7 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
 }
 
 // Geometry Function
-float GeometrySchlickGGX(float NdotV, float roughness)
+float pbrGeometry(float NdotV, float roughness)
 {
     float r = (roughness + 1.0);
     float k = (r * r) / 8.0;
@@ -418,19 +415,20 @@ float GeometrySchlickGGX(float NdotV, float roughness)
 }
 
 // Combined Geometry term
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+float pbrCombinedGeometry(vec3 N, vec3 V, vec3 L, float roughness)
 {
     float NdotV = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
-    float ggx1 = GeometrySchlickGGX(NdotV, roughness);
-    float ggx2 = GeometrySchlickGGX(NdotL, roughness);
+    float ggx1 = pbrGeometry(NdotV, roughness);
+    float ggx2 = pbrGeometry(NdotL, roughness);
     
     return ggx1 * ggx2;
 }
 
 // Fresnel Equation
-vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+vec3 pbrFresnel(float cosTheta, vec3 F0, float roughness)
 {
+    // Calculate Fresnel term for roughness 
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
@@ -460,9 +458,9 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
     float shadow = shadowOnFragment(FragPosProjectedLightSpace) * 0.5;
         
     // Calculate BRDF
-    float NDF = DistributionGGX(N, H, roughnessValue);
-    float G = GeometrySmith(N, V, L, roughnessValue);
-    vec3 F = FresnelSchlickRoughness(max(dot(H, V), 0.0), F0, roughnessValue);
+    float NDF = pbrDistribution(N, H, roughnessValue);
+    float G = pbrCombinedGeometry(N, V, L, roughnessValue);
+    vec3 F = pbrFresnel(max(dot(H, V), 0.0), F0, roughnessValue);
         
     // Specular component
     vec3 numerator = NDF * G * F;
@@ -514,9 +512,9 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
             vec3 radiance = spotColour * attenuation * intensity;
             
             // Calculate BRDF
-            float NDF = DistributionGGX(N, H, roughnessValue);
-            float G = GeometrySmith(N, V, L, roughnessValue);
-            vec3 F = FresnelSchlickRoughness(max(dot(H, V), 0.0), F0, roughnessValue);
+            float NDF = pbrDistribution(N, H, roughnessValue);
+            float G = pbrCombinedGeometry(N, V, L, roughnessValue);
+            vec3 F = pbrFresnel(max(dot(H, V), 0.0), F0, roughnessValue);
             
             // Calculate specular component
             vec3 numerator = NDF * G * F;
@@ -540,9 +538,9 @@ vec3 CalculatePBR(vec3 N, vec3 V, vec3 albedoValue, float metallicValue, float r
         float attenuation = 1.0 / (1.0 + 0.05 * distance + 0.0002 * distance * distance);
         vec3 radiance = posColour * attenuation;
 
-        float NDF = DistributionGGX(N, H, roughnessValue);
-        float G = GeometrySmith(N, V, L, roughnessValue);
-        vec3 F = FresnelSchlickRoughness(max(dot(H, V), 0.0), F0, roughnessValue);
+        float NDF = pbrDistribution(N, H, roughnessValue);
+        float G = pbrCombinedGeometry(N, V, L, roughnessValue);
+        vec3 F = pbrFresnel(max(dot(H, V), 0.0), F0, roughnessValue);
     
         vec3 numerator = NDF * G * F;
         float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
@@ -657,6 +655,11 @@ void main()
         } else {
             finalColour = vec4(finalLightColour * colour.rgb, colour.a);
         }
+    }
+
+    if(uses_glow){
+    // Apply glow map
+        finalColour = applyGlowMap(finalColour);
     }
     
     fColour = finalColour;
