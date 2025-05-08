@@ -15,6 +15,7 @@ glm::vec3 screenToWorldRay(double xpos, double ypos, int width, int height, glm:
 
 
 bool rayIntersectsSphere(const glm::vec3& rayOrigin, const glm::vec3& rayDir, const glm::vec3& center, float radius) {
+	// For mouse interactions with UFO sphere
 	glm::vec3 oc = rayOrigin - center;
 	float b = glm::dot(oc, rayDir);
 	float c = glm::dot(oc, oc) - radius * radius;

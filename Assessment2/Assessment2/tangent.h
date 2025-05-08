@@ -44,7 +44,7 @@ void generateTangentsAndBitangents(const GLfloat* inputVertices, size_t numVerti
         // Append each vertex with full attributes (17 floats)
         for (int j = 0; j < 3; ++j) {
             const GLfloat* vin = &inputVertices[(i + j) * floatsPerInputVertex];
-            outputVertices.insert(outputVertices.end(), vin, vin + floatsPerInputVertex); // pos+col+uv+normal
+            outputVertices.insert(outputVertices.end(), vin, vin + floatsPerInputVertex); 
             outputVertices.push_back(tangent.x);
             outputVertices.push_back(tangent.y);
             outputVertices.push_back(tangent.z);

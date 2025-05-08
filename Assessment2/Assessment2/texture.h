@@ -63,6 +63,7 @@ GLuint setup_texture(const char* filename)
 	}
 	glGenerateMipmap(GL_TEXTURE_2D);
 	
+	printf("Successfully loaded texture %s.\n", filename);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 
@@ -125,7 +126,7 @@ GLuint setup_texture_pbr(const char* filename, bool is_srgb)
 	else {
 		std::cerr << "Failed to load texture: " << filename << std::endl;
 	}
-
+	printf("Successfully loaded PBR texture %s.\n", filename);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 	return texObject;
@@ -163,12 +164,13 @@ GLuint setup_mipmaps(const char* filename[], int n)
 	// Check pxls colour data ia loaded correctly
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
-
+	printf("Successfully loaded mipmap texture %s to %s.\n", filename[0], filename[n-1]);
 	return texObject;
 }
 
 GLuint setup_cubemap(std::vector<std::string> faces)
 {
+	// Set up a texture with a cubemap
 	if (faces.size() != 6) {
 		std::cerr << "Error: Cubemap requires exactly 6 faces." << std::endl;
 		return 0;
@@ -201,14 +203,17 @@ GLuint setup_cubemap(std::vector<std::string> faces)
 		}
 	}
 
+	// Configure texture properties
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-	// Optional, depending on whether your cubemap uses mipmaps
+	// Generate mipmaps for the cubemap texture
 	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+	printf("Successfully applied cubemap.\n");
 
 	return textureID;
 }

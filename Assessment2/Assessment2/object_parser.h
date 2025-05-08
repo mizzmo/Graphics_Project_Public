@@ -33,8 +33,8 @@ struct vertex
 	glm::vec3 col;
 	glm::vec3 nor;
 	glm::vec2 tex;
-	glm::vec3 tangent;    // Added for normal mapping
-	glm::vec3 bitangent;  // Added for normal mapping
+	glm::vec3 tangent;   
+	glm::vec3 bitangent;  
 };
 
 struct triangle
@@ -244,7 +244,7 @@ int obj_parse(const char* filename, std::vector<triangle>* io_tris, const char* 
 		}
 	}
 
-	printf("successfully parsed %s and read %d triangles \n", filename, io_tris->size());
+	printf("Successfully parsed %s and read %d triangles.\n", filename, io_tris->size());
 	return 0;
 }
 
@@ -264,7 +264,7 @@ vector<GLfloat> tri_to_fl_array(const std::vector<triangle>& triangles, bool use
 			tri_array.push_back(v.pos.y);
 			tri_array.push_back(v.pos.z);
 
-			// Color
+			// Colour
 			tri_array.push_back(v.col.r);
 			tri_array.push_back(v.col.g);
 			tri_array.push_back(v.col.b);
