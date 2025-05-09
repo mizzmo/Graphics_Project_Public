@@ -1073,25 +1073,6 @@ void draw_vase(unsigned int program) {
 }
 
 void draw_squares(unsigned int program) {
-	
-	// Red Square
-	glBindVertexArray(VAOs[10]);
-	glm::mat4 modelRed = glm::mat4(1.0f);
-	modelRed = glm::translate(modelRed, glm::vec3(2.f, 0.8f, 3.f));
-	modelRed = glm::rotate(modelRed, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
-	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelRed));
-	int numRedVertices = sizeof(redSquare) / (10 * sizeof(float));
-	glDrawArrays(GL_TRIANGLES, 0, numRedVertices);
-
-	// Green Square
-	glBindVertexArray(VAOs[11]);
-	glm::mat4 modelGreen = glm::mat4(1.0f);
-	modelGreen = glm::translate(modelGreen, glm::vec3(3.3f, 0.8f, 4.3f));
-	modelGreen =  glm::rotate(modelGreen, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
-	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelGreen));
-	int numGreenVertices = sizeof(greenSquare) / (10 * sizeof(float));
-	glDrawArrays(GL_TRIANGLES, 0, numGreenVertices);
-
 	// Blue Square
 	glBindVertexArray(VAOs[12]);
 	glm::mat4 modelBlue = glm::mat4(1.0f);
@@ -1100,6 +1081,22 @@ void draw_squares(unsigned int program) {
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelBlue));
 	int numBlueVertices = sizeof(blueSquare) / (10 * sizeof(float));
 	glDrawArrays(GL_TRIANGLES, 0, numBlueVertices);
+	// Green Square
+	glBindVertexArray(VAOs[11]);
+	glm::mat4 modelGreen = glm::mat4(1.0f);
+	modelGreen = glm::translate(modelGreen, glm::vec3(3.3f, 0.8f, 4.3f));
+	modelGreen = glm::rotate(modelGreen, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelGreen));
+	int numGreenVertices = sizeof(greenSquare) / (10 * sizeof(float));
+	glDrawArrays(GL_TRIANGLES, 0, numGreenVertices);
+	// Red Square
+	glBindVertexArray(VAOs[10]);
+	glm::mat4 modelRed = glm::mat4(1.0f);
+	modelRed = glm::translate(modelRed, glm::vec3(2.f, 0.8f, 3.f));
+	modelRed = glm::rotate(modelRed, glm::radians(-140.f), glm::vec3(0.f, 1.f, 0.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelRed));
+	int numRedVertices = sizeof(redSquare) / (10 * sizeof(float));
+	glDrawArrays(GL_TRIANGLES, 0, numRedVertices);
 }
 
 void generate_depth_map(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
@@ -1150,6 +1147,8 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_glow"), false);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), false);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_bump"), false);
+	// Set PBR False
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_pbr"), false);
 
 	glUniformMatrix4fv(glGetUniformLocation(renderShaderProgram, "projectedLightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(projectedLightSpaceMatrix));
 	glUniform3f(glGetUniformLocation(renderShaderProgram, "camPos"), activeCamera->Position.x, activeCamera->Position.y, activeCamera->Position.z);
@@ -1162,6 +1161,10 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	// Default Shininess
 	float default_shine = 64.f;
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "shininess"), default_shine);
+
+	// Yellowish Ambient light
+	glUniform3f(glGetUniformLocation(renderShaderProgram, "environmentIntensity"), 1.f, 0.98f, 0.7f);
+	glUniform1f(glGetUniformLocation(renderShaderProgram, "environmentIntensity"), 1.5f);
 
 	// Spot lighting
 	float t = glfwGetTime();
@@ -1262,6 +1265,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	draw_pyramid(renderShaderProgram);
 
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_parrallax"), false);
+	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), false);
 	glUniform1f(glGetUniformLocation(renderShaderProgram, "uv_scale"), 1.0f);
 
 
@@ -1290,9 +1294,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 
 	draw_jet(renderShaderProgram);
 
-	// Yellowish Ambient light
-	glUniform3f(glGetUniformLocation(renderShaderProgram, "environmentIntensity"), 1.f, 0.98f, 0.7f);
-	glUniform1f(glGetUniformLocation(renderShaderProgram, "environmentIntensity"), 1.5f);
+
 
 
 	// ---- ROCKS ----
@@ -1438,7 +1440,7 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 
 	// ---- SQUARES ----
 	// Draw last for transparency
-	
+
 
 	draw_squares(renderShaderProgram);
 
