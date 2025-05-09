@@ -1,5 +1,20 @@
-Sphinx: 
-https://www.cgtrader.com/free-3d-print-models/art/sculptures/abolhole
+Jet Plane:
+https://www.cgtrader.com/free-3d-models/aircraft/military-aircraft/dassault-rafale-b-bdc1590e-5936-4912-ba44-79f5c2e09f07
+
+UFO:
+https://www.cgtrader.com/free-3d-models/space/spaceship/free-flying-saucer
 
 Rocks: 
 https://sketchfab.com/3d-models/asset-pack-egypt-low-poly-128dbc9ec9d24b58bdd1d9e4ed49fc17
+
+Vase:
+https://www.cgtrader.com/free-3d-models/architectural/decoration/flowervase
+
+Stone Texture:
+https://freepbr.com/product/stone-block-wall/
+
+Sand Texture:
+https://3djungle.net/textures/sand/1779/
+
+Skybox:
+https://tools.wwwtyro.net/space-3d/ 

@@ -1590,8 +1590,10 @@ int main() {
 		draw_skybox(skybox_shader);
 
 		// Render rest of objects
+		glCullFace(GL_FRONT);
 		generate_depth_map(shadow_shader, shadow, projectedLightSpaceMatrix);
 		render_with_shadow(lighting_program, shadow, projectedLightSpaceMatrix);
+		glCullFace(GL_BACK);
 		// Render the shooting stars
 		draw_star(star_shader);
 
