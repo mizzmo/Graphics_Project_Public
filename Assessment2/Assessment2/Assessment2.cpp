@@ -1073,7 +1073,7 @@ void draw_vase(unsigned int program) {
 }
 
 void draw_squares(unsigned int program) {
-	glDepthMask(GL_FALSE);
+	
 	// Red Square
 	glBindVertexArray(VAOs[10]);
 	glm::mat4 modelRed = glm::mat4(1.0f);
@@ -1100,8 +1100,6 @@ void draw_squares(unsigned int program) {
 	glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(modelBlue));
 	int numBlueVertices = sizeof(blueSquare) / (10 * sizeof(float));
 	glDrawArrays(GL_TRIANGLES, 0, numBlueVertices);
-
-	glDepthMask(GL_TRUE);
 }
 
 void generate_depth_map(unsigned int shadowShaderProgram, ShadowStruct shadow, glm::mat4 projectedLightSpaceMatrix) {
@@ -1426,6 +1424,8 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 
 	// --- CYLINDER ---
 	// Deactivate textures
+	glDepthMask(GL_FALSE);
+
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_glow"), false);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_normal"), false);
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_specular"), false);
@@ -1443,6 +1443,8 @@ void render_with_shadow(unsigned int renderShaderProgram, ShadowStruct shadow, g
 	draw_squares(renderShaderProgram);
 
 	glUniform1i(glGetUniformLocation(renderShaderProgram, "uses_texture"), true);
+
+	glDepthMask(GL_TRUE);
 
 }
 
