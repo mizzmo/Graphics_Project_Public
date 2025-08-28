@@ -1,9 +1,0 @@
-﻿  Lab3.cpp
-P:\COMP3011\computer_graphics\include\file.h(18,11): warning C4267: 'initializing': conversion from 'size_t' to 'long', possible loss of data
-  (compiling source file 'Lab3.cpp')
-  
-P:\COMP3011\computer_graphics\Lab3\Lab3\Lab3.cpp(50,36): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-P:\COMP3011\computer_graphics\Lab3\Lab3\Lab3.cpp(51,36): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-P:\COMP3011\computer_graphics\Lab3\Lab3\Lab3.cpp(57,36): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-P:\COMP3011\computer_graphics\Lab3\Lab3\Lab3.cpp(58,36): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-  Lab3.vcxproj -> P:\COMP3011\computer_graphics\Lab3\x64\Debug\Lab3.exe

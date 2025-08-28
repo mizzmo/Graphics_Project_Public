@@ -1,5 +1,0 @@
-﻿  Lab4a.cpp
-P:\COMP3011\computer_graphics\include\file.h(18,11): warning C4267: 'initializing': conversion from 'size_t' to 'long', possible loss of data
-  (compiling source file 'Lab4a.cpp')
-  
-  Lab4a.vcxproj -> P:\COMP3011\computer_graphics\Lab4a\x64\Debug\Lab4a.exe

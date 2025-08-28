@@ -1,3 +1,0 @@
-﻿  gl3w.c
-  Lab7b.cpp
-C:\Users\mizzm\Desktop\computer_graphics\computer_graphics\Lab7b\Lab7b\Lab7b.cpp(4,10): error C1083: Cannot open include file: 'glm/glm.hpp': No such file or directory
