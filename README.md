@@ -46,16 +46,22 @@ This scene shows procedurally generated desert dunes in a starry night sky. On t
 The second object is a plane of desert dunes, generated using a grid of triangles which form together to create a flat plane. I then manipulate this plane using Sine waves to change the height of each triangle, creating the dune effect. I also implemented roughness to make the waves appear more interesting and random.
 </p>
 
-Put Images Here
-<img src=''>
+<div>
+<img src='/image_res/modelling1.png'>
+<img src='/image_res/modelling2.png'>
+</div>
 
 <i>Generated using TinyObjectLoader OBJ Parser:</i>
 <p>The first object shown is a Jet Plane rendered using an .OBJ file and .mtl for texture mapping and colours. The parser I have designed supports tangent space calculations, textures and colours as well as automatic translations into vectors of floats rather than triangle objects for use with OpenGL buffers.</p>
 
 <p>Loaded objects are rendered with Shadow and react to lighting, as seen by the green reflections from the positional light in the image with the plane. Objects also support transparency as shown in the image with the UFO. The Ruins object is used to showcase my PBR shader as a matte colour object, while the vase is used to showcase a shiny PBR object.</p>
 
-Put Images Here
-<img src=''>
+<div>
+<img src='/image_res/modelling3.png'>
+<img src='/image_res/modelling4.png'>
+<img src='/image_res/modelling5.png'>
+<img src='/image_res/modelling6.png'>
+<div>
 
 
 <h4 id='3d_transformation'>3D Object Transformations</h4>
