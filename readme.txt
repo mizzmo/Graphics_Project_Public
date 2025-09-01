@@ -1,0 +1,1 @@
+This folder contains image resources used for the readme in this repository.
