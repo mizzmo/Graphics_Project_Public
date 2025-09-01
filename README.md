@@ -1,8 +1,11 @@
 <h1 id='head'>Computer Graphics using OpenGL</h1>
 <b>Author: Toby Surtees</b>
 
+<p>This Project was designed to be a demonstration of different graphical techniques that I have implemented into a single scene. I wrote this project in C++ and GLSL as an exercise to learn about OpenGL and the different things you can build when using it, as well as for developing a better understanding of how computer graphics work.</p>
+
 <h3 id='contents'>Contents:</h3>
 <ol>
+	<li><a href='/setup.md'>Setup Instructions</a></li>
 	<li><a href='/Graphics_Main/Assessment2/README.txt'>Controls</a></li>
 	<li><a href='#desc'>Scene Description</a></li>
 	<li><a href='#demo'>Graphics Demo</a></li>
@@ -24,8 +27,6 @@
 </ol>
 
 <h3 id='desc'>Description</h3>
-
-<p>This Project was designed to be a demonstration of different graphical techniques that I have implemented into a single scene. I wrote this project in C++ and GLSL as an exercise to learn about OpenGL and the different things you can build when using it, as well as for developing a better understanding of how computer graphics work.</p>
 
 <p>
 I implemented this scene to act as a unique way to demonstrate several simple to advanced computer graphics techniques using different types of objects. I utilised a dimly lit setting to better demonstrate shiny surfaces in simulated moonlight, while showcasing different glowing objects for interactions between light sources and transparent objects. I have also included interactive objects which can alter how the scene is lit and falls in shadow.
