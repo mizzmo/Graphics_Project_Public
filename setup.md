@@ -5,7 +5,7 @@
 
 <p>Firstly, you need Visual Studio. You must then import the project .sln file 'Assessment2.sln' as a project.</p>
 
-<p>From here, you must add the include files and lib files to the project. The specific steps to do this are as follows: </p>
+<p>From here, you must add the include files and lib files to the project. The specific lines that need to be added, and where to add them are as follows: </p>
 <p> 
 VC++:<br>
 Include Directories: ../../include;<br>
@@ -17,5 +17,5 @@ Additional Dependencies: glfw3.lib;<br><br>
 Add gl3w.c to source files.
 </p>
 
-<p>From here, you should be able to launch the scene in <b>Debug Mode<b> using the IDE.</p>
+<p>From here, you should be able to launch the scene in <b>Debug Mode</b> using the IDE.</p>
 
