@@ -133,7 +133,7 @@ Put Images Here
 <p><b>Percentage Closer Filtering:</b>
 <p>
 <i>Sources:</i> <br>
-<i><a href='https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing'>https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing</a>
+<i><a href='https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing'>https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing</a></i>
 <br><i><a href='https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping'>https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping</a></i>
 
 PCF improves shadow mapping by sampling nearby texels and forming an average value for softer, more realistic looking edges.
