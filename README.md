@@ -69,8 +69,7 @@ The second object is a plane of desert dunes, generated using a grid of triangle
 
 Additionally, The vase has been scaled down to fit on the pedestal in the ruins object, rotated to face straight on the pedestal and translated to the correct position.
 
-Put Images Here
-<img src=''>
+<img src='/image_res/modelling1.png'>
 
 
 <h4 id='3d_animation'>3D Animation</h4>
@@ -78,8 +77,7 @@ Put Images Here
 
 <p>The UFO also rotates in place, as do its projected spot-lights.</p>
 
-Put Images Here
-<img src=''>
+<img src='/image_res/modelling3.png'>
 
 <h4 id='camera'>Camera</h4>
 <p>There are a total of 7 cameras implemented in this scene. <br>
@@ -88,8 +86,7 @@ The second (Pictured) is a first-person fly-through camera that can be controlle
 Next is an animated rotating camera that circles the scene, its speed can be changed with the square bracket keys '[]'. <br>
 Finally, are 4 fixed cameras that are set at each corner of the scene.</p>
 
-Put Images Here
-<img src=''>
+<img src='/image_res/camera1.png'>
 
 <h4 id='texture'>Texture</h4>
 <p>The first image shows the sand dunes with a sand texture. This texture uses an array of mipmaps from 1x1 to 1024x1024 mapped to texture coordinates.</p>
@@ -98,8 +95,11 @@ Put Images Here
 
 <p>The third image shows a texture applied to the UFO object, which uses a normal map for raised details, a glow map for enhanced glowing areas such as the green lights, a specular map for shiny areas and a bump map, again for smaller details. This creates the detailed effect you can see in the image.</p>
 
-Put Images Here
-<img src=''>
+<div>
+<img src='/image_res/texture1.png'>
+<img src='/image_res/texture2.png'>
+<img src='/image_res/texture3.png'>
+</div>
 
 <h4 id='lighting'>Lighting</h4>
 <i>Blinn-Phong:</i>
@@ -111,16 +111,20 @@ The first and most obvious is the green positional light, which is positioned di
 <i>Physically Based Rendering:</i>
 <p>The vase object is implemented using Physically Based Rendering (PBR) which more accurately simulates the properties of different materials. The directional light can be seen producing a nice shine on the side of the object, while the positional light contributes to this shine by adding a green tinge. The lights can be seen reflecting off small imperfections on the object, as well as realistically wrapping round the handles. In this screenshot, we can also see a matte PBR object reacting differently to the light. Normal mapping is also used here to improve depth perception.</p>
 
-Put Images Here
-<img src=''>
+<div>
+<img src='/image_res/lighting1.png'>
+<img src='/image_res/lighting2.png'>
+</div>
 
 <h4 id='shadow'>Shadow</h4>
 <p>By moving the directional light to a low-down position, we can see the shadows cast by the procedurally generated dunes. This is achieved using shadow mapping to determine whether an object is in shadow. This effect is enhanced by using Percentage Closer Filtering (PCF) to soften the edges of the shadows by sampling neighbouring texels and getting an average colour result.</p>
 
 <p>This image shows the shadows projected from the UFO and Plane objects, produced by the directional light. These shadows are projected onto the ground and stretched by the unlevel surface, producing a more realistic effect.</p>
 
-Put Images Here
-<img src=''>
+<div>
+<img src='/image_res/shadow1.png'>
+<img src='/image_res/shadow2.png'>
+</div>
 
 <h4 id='interact'>Interactivity</h4>
 <p>The interactive object shown is the UFO, light beam (cone) and associated lighting elements (positional and spotlights). By simulating a sphere around a central point, set at the middle of the UFO, I can then check if the user’s mouse is within that radius when a mouse click is registered.</p>
@@ -131,14 +135,20 @@ Put Images Here
 
 <p>The scene can be reset by pressing E, returning the ship, beam and lighting to the scene.</p>
 
-Put Images Here
-<img src=''>
+<div>
+<img src='/image_res/interact1.png'>
+<img src='/image_res/interact2.png'>
+<img src='/image_res/interact3.png'>
+</div>
 
 <h4 id='curves'>Curves</h4>
 <p>This implementation of Bezier curves is used to simulate shooting stars moving across the sky. Each shooting star's path is generated procedurally using four randomized control points, forming a smooth, curved trajectory. The curve is evaluated into points and rendered as a GL line strip to create streaks in the sky. This is animated by progressively drawing segments of the line, creating the illusion of motion. Once the animation completes, a new path is generated, making each shooting star appear unique and dynamic.</p>
 
-Put Images Here
-<img src=''>
+<div>
+<img src='/image_res/curves1.png'>
+<img src='/image_res/curves2.png'>
+<img src='/image_res/curves3.gif'>
+</div>
 
 <h4 id='transparency'>Transparency</h4>
 <p>The first example of transparency is the three panes in the ruins. Each pane has a different colour, and by looking through the first pane we can see the colours combining as each pane contributes to the final colour. This was achieved by defining three simple squares with alpha values, and disabling depth masking while rendering, so that other objects appear correctly, as well as rendering opaque objects first, then rendering transparent object back-to-front to enable multiple transparent objects.</p>
@@ -147,8 +157,11 @@ Put Images Here
 
 <p>Finally, the UFO uses transparent textures so you can see into the cockpit and into the ship through the side windows.</p>
 
-Put Images Here
-<img src=''>
+<div>
+<img src='/image_res/transparent1.png'>
+<img src='/image_res/transparent2.png'>
+<img src='/image_res/interact1.png'>
+</div>
 
 <h4 id='research'>Researched Techniques & Sources</h4>
 <p><h5 id='pcf'>Percentage Closer Filtering:</h5>
@@ -159,6 +172,8 @@ Put Images Here
 
 PCF improves shadow mapping by sampling nearby texels and forming an average value for softer, more realistic looking edges.
 </p>
+
+<img src='/image_res/pcf.png'>
 
 <h5 id='pbr'>Physically Based Rendering:</h5>
 <p>
@@ -174,6 +189,8 @@ I implemented a Cook-Torrance BRDF model to simulate surface reflectance, simula
 Material appearance is influenced by metallicity, roughness, and ambient occlusion, allowing for realistic variation between shiny metals and rough materials. I also used HDR tone mapping and gamma correction for more control over the scene.
 </p>
 
+<img src='/image_res/pbr.png'>
+
 <h5 id='pom'>Parallax Occlusion Mapping:</h5>
 <p>
 <i>Sources:</i><br>
@@ -185,6 +202,8 @@ POM is used to simulate depth and surface detail by offsetting texture coordinat
 I used ray marching and a height map in tangent space to find where the view ray intersects the virtual surface layers. Once the intersection is found, I perform linear interpolation between the last two steps for smoother results. These texture coordinates are then used to sample a normal map, which is transformed back into world space for realistic lighting interaction.
 </p>
 
+<img src='/image_res/pom.png'>
+
 <h5 id='bfl'>Blinn-Phong Lighting:</h5>
 <p>
 <i>Source:</i><br>
@@ -192,9 +211,11 @@ I used ray marching and a height map in tangent space to find where the view ray
 
 Blinn-Phong improves on Phong lighting by computing specular highlights using a halfway vector between the light and view directions. This results in more realistic looking lighting with better specular highlights and shininess.
 </p>
-Put Images Here
-<img src=''>
 
+<div>
+<img src='/image_res/interact1.png'>
+<img src='/image_res/texture3.png'>
+</div>
 
 <h4 id='credits'>Credits</h4>
 <ul>
