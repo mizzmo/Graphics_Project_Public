@@ -1,6 +1,6 @@
 <h1 id='head'>Computer Graphics using OpenGL</h1>
-<b>Author: Toby Surtees</b>
-<br>
+<p><b>Author: Toby Surtees</b></p>
+
 <p>This Project was designed to be a demonstration of different graphical techniques that I have implemented into a single scene. I wrote this project in C++ and GLSL as an exercise to learn about OpenGL and the different things you can build when using it, as well as for developing a better understanding of how computer graphics work.</p>
 
 <h3 id='contents'>Contents:</h3>
