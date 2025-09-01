@@ -9,12 +9,12 @@
 <p> 
 VC++:<br>
 Include Directories: ../../include;<br>
-Library Directories: ../../lib/glfw-3.4.bin.WIN64/lib-vc2022;<br><br>
+Library Directories: ../../lib/glfw-3.4.bin.WIN64/lib-vc2022;<br>
 
 Linker/Input:<br>
-Additional Dependencies: glfw3.lib;<br><br>
+Additional Dependencies: glfw3.lib;<br>
 
-Add gl3w.c to source files.
+Add gl3w.c to source files.<br>
 </p>
 
 <p>From here, you should be able to launch the scene in <b>Debug Mode</b> using the IDE.</p>
