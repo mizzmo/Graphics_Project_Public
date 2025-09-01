@@ -23,6 +23,9 @@
 </ol>
 
 <h3 id='desc'>Description</h3>
+
+<p>This Project was designed to be a demonstration of different graphical techniques that I have implemented into a single scene. I wrote this project in C++ and GLSL as an exercise to learn about OpenGL and the different things you can build when using it, as well as for developing a better understanding of how computer graphics work.</p>
+
 <p>
 I implemented this scene to act as a unique way to demonstrate several, simple to advanced, computer graphics techniques using different types of objects. This scene utilities a dimly lit setting to better demonstrate shiny surfaces in simulated moon light, while encompassing different glowing objects to showcase interactions between light sources and effect on transparency, which interactive elements to remove said light sources for a different effect.
 </p>
