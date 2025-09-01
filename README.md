@@ -27,11 +27,11 @@
 <p>This Project was designed to be a demonstration of different graphical techniques that I have implemented into a single scene. I wrote this project in C++ and GLSL as an exercise to learn about OpenGL and the different things you can build when using it, as well as for developing a better understanding of how computer graphics work.</p>
 
 <p>
-I implemented this scene to act as a unique way to demonstrate several, simple to advanced, computer graphics techniques using different types of objects. This scene utilities a dimly lit setting to better demonstrate shiny surfaces in simulated moon light, while encompassing different glowing objects to showcase interactions between light sources and effect on transparency, which interactive elements to remove said light sources for a different effect.
+I implemented this scene to act as a unique way to demonstrate several simple to advanced computer graphics techniques using different types of objects. I utilised a dimly lit setting to better demonstrate shiny surfaces in simulated moonlight, while showcasing different glowing objects for interactions between light sources and transparent objects. I have also included interactive objects which can alter how the scene is lit and falls in shadow.
 </p>
 
 <p>
-This scene shows procedurally generated desert dunes in a starry night sky. On the dunes there is a 3D pyramid surrounded by a transparent cone of light leading up to a large, spinning UFO. The UFO is producing a glowing green colour, while projecting 4 red spinning spotlights on the ground around the pyramid. Circling the UFO is a jet plane. In the background there are some Egyptian ruins showcasing different transparent layers, aimed to represent stained glass, and sitting on those ruins is a large ancient vase. Looking up at the sky we see procedurally generated, animated shooting stars.
+This scene shows procedurally generated desert dunes in a starry night sky. On the dunes, there is a 3D pyramid surrounded by a transparent cone of light leading up to a large, spinning UFO. The UFO is producing a glowing green colour while projecting 4 red spinning spotlights on the ground around the pyramid. Circling the UFO is a jet plane. In the background, there are some Egyptian ruins showcasing different transparent layers, aimed to represent stained glass, and sitting on those ruins is a large ancient vase. Looking up at the sky, we see procedurally generated, animated shooting stars.
 </p>
 
 <p>
