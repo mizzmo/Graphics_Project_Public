@@ -3,6 +3,7 @@
 
 <h3 id='contents'>Contents:</h3>
 <ol>
+	<li><a href='/Graphics_Main/Assessment2/README.txt'>Controls</a></li>
 	<li><a href='#desc'>Scene Description</a></li>
 	<li><a href='#demo'>Graphics Demo</a></li>
     <li><a href='#3d_modelling'>3D Modelling</a></li>
