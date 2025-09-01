@@ -17,7 +17,7 @@
     <li><a href='#curves'>Curves</a></li>
     <li><a href='#transparency'>Transparency</a></li>
     <li><a href='#research'>Researched Techniques & Sources</a></li>
-    <li><a href='/asset_credits.txt'>Asset Credits</a></li>
+    <li><a href='/asset_credits.md'>Asset Credits</a></li>
     <li><a href='#credits'>Tool Credits</a></li>
 
 </ol>
