@@ -132,18 +132,18 @@ Put Images Here
 <h4>Researched Techniques & Sources</h4>
 <p><b>Percentage Closer Filtering:</b>
 <p>
-<i>Sources:</i> 
+<i>Sources:</i> <br>
 <i><a href='https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing'>https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing</a>
-<i><a href='https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping'>https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping</a></i>
+<br><i><a href='https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping'>https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping</a></i>
 
 PCF improves shadow mapping by sampling nearby texels and forming an average value for softer, more realistic looking edges.
 </p>
 
 <b>Physically Based Rendering:</b>
 <p>
-<i>Sources:</i>
+<i>Sources:</i><br>
 <i><a href='https://learnopengl.com/PBR/Theory'>https://learnopengl.com/PBR/Theory</i>
-<i><a href='https://learnopengl.com/PBR/Lighting'>https://learnopengl.com/PBR/Lighting
+<br><i><a href='https://learnopengl.com/PBR/Lighting'>https://learnopengl.com/PBR/Lighting
 </i>
 
 PBR aims to replicate how light interacts with real-world surfaces by using physical properties like albedo, metallics, roughness, and ambient occlusion.
@@ -155,9 +155,9 @@ Material appearance is influenced by metallicity, roughness, and ambient occlusi
 
 <b>Parallax Occlusion Mapping:</b>
 <p>
-<i>Sources:</i>
+<i>Sources:</i><br>
 <i><a href='https://learnopengl.com/Advanced-Lighting/Parallax-Mapping'>https://learnopengl.com/Advanced-Lighting/Parallax-Mapping</a></i>
-<i><a href='https://rdmilligan.wordpress.com/2018/03/09/parallax-mapping-with-opengl-and-c/'>https://rdmilligan.wordpress.com/2018/03/09/parallax-mapping-with-opengl-and-c/</a></i>
+<br><i><a href='https://rdmilligan.wordpress.com/2018/03/09/parallax-mapping-with-opengl-and-c/'>https://rdmilligan.wordpress.com/2018/03/09/parallax-mapping-with-opengl-and-c/</a></i>
 
 POM is used to simulate depth and surface detail by offsetting texture coordinates based on a height map and the viewer's perspective, adding visual complexity without increasing mesh detail.
 
@@ -166,7 +166,7 @@ I used ray marching and a height map in tangent space to find where the view ray
 
 <b>Blinn-Phong Lighting:</b>
 <p>
-<i>Source:</i>
+<i>Source:</i><br>
 <i><a href = 'https://learnopengl.com/Advanced-Lighting/Advanced-Lighting'>https://learnopengl.com/Advanced-Lighting/Advanced-Lighting</a></i>
 
 Blinn-Phong improves on Phong lighting by computing specular highlights using a halfway vector between the light and view directions. This results in more realistic looking lighting with better specular highlights and shininess.
